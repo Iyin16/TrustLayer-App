@@ -16,6 +16,10 @@ import {
   CheckCircle2,
   Activity,
   ArrowUpRight,
+  ArrowUpDown,
+  Network,
+  FlaskConical,
+  Sparkles,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
@@ -31,6 +35,8 @@ const kpis: Kpi[] = [
 
 const sources = ["All", "Snowflake", "BigQuery", "Postgres", "Redshift", "Databricks"] as const;
 const statuses = ["All", "Healthy", "Warning", "At Risk"] as const;
+const sortOptions = ["Highest Trust Score", "Lowest Trust Score", "Recently Updated"] as const;
+type SortOption = typeof sortOptions[number];
 
 function trustBadge(score: number) {
   const tone =
@@ -71,7 +77,46 @@ function FilterChip({
   );
 }
 
+function MetricRow({
+  icon: Icon,
+  label,
+  value,
+  state,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  state: "ok" | "warn" | "bad";
+  hint: string;
+}) {
+  const tone =
+    state === "ok"
+      ? "text-[#34d399] bg-[rgba(52,211,153,0.10)] ring-[rgba(52,211,153,0.25)]"
+      : state === "warn"
+      ? "text-[#fbbf24] bg-[rgba(251,191,36,0.10)] ring-[rgba(251,191,36,0.25)]"
+      : "text-[#f87171] bg-[rgba(248,113,113,0.10)] ring-[rgba(248,113,113,0.25)]";
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-3.5 py-3">
+      <div className="flex items-start gap-2.5 min-w-0">
+        <div className={["h-7 w-7 rounded-md ring-1 flex items-center justify-center shrink-0", tone].join(" ")}>
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-[12.5px] font-medium text-white">{label}</div>
+          <div className="mt-0.5 text-[11.5px] text-[#a1a1aa] leading-snug">{hint}</div>
+        </div>
+      </div>
+      <div className={["text-[12px] font-semibold tabular-nums whitespace-nowrap", state === "ok" ? "text-[#34d399]" : state === "warn" ? "text-[#fbbf24]" : "text-[#f87171]"].join(" ")}>{value}</div>
+    </div>
+  );
+}
+
 function DetailPanel({ ds, onClose }: { ds: Dataset; onClose: () => void }) {
+  const freshState: "ok" | "warn" | "bad" = ds.pillars.freshness >= 80 ? "ok" : ds.pillars.freshness >= 60 ? "warn" : "bad";
+  const lineageState: "ok" | "warn" | "bad" = ds.lineage.coverage >= 80 ? "ok" : ds.lineage.coverage >= 60 ? "warn" : "bad";
+  const qPct = Math.round((ds.qualityTests.passed / ds.qualityTests.total) * 100);
+  const qualityState: "ok" | "warn" | "bad" = qPct >= 90 ? "ok" : qPct >= 60 ? "warn" : "bad";
   return (
     <Card className="p-0 overflow-hidden">
       <div className="relative px-6 pt-6 pb-5 border-b border-[#16161a]">
@@ -106,55 +151,53 @@ function DetailPanel({ ds, onClose }: { ds: Dataset; onClose: () => void }) {
             <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Owner</div>
             <div className="mt-1.5 flex items-center gap-2">
               <div className="h-6 w-6 rounded-full bg-[#1f1f24] flex items-center justify-center text-[9.5px] font-semibold text-[#a8a8b3]">{ds.ownerInitials}</div>
-              <span className="text-[12.5px] text-white">{ds.ownerName}</span>
+              <span className="text-[12.5px] text-white truncate">{ds.ownerName}</span>
             </div>
           </div>
           <div className="rounded-lg border border-[#1f1f24] bg-[#0d0d10] p-3">
-            <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Updated</div>
+            <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Last Updated</div>
             <div className="mt-1.5 text-[12.5px] text-white">{ds.updated}</div>
-          </div>
-          <div className="rounded-lg border border-[#1f1f24] bg-[#0d0d10] p-3">
-            <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Status</div>
-            <div className="mt-1.5">
-              <span className={["inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium", statusPill(ds.status)].join(" ")}>
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                {ds.status}
-              </span>
-            </div>
-          </div>
-          <div className="rounded-lg border border-[#1f1f24] bg-[#0d0d10] p-3">
-            <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Rows</div>
-            <div className="mt-1.5 text-[12.5px] text-white">{(ds.trust * 142_318).toLocaleString()}</div>
           </div>
         </div>
 
-        <div>
-          <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold mb-2">Recent checks</div>
-          <div className="space-y-2">
-            {[
-              { label: "Schema integrity", ok: true },
-              { label: "Freshness SLA", ok: ds.trust >= 60 },
-              { label: "Row volume anomaly", ok: ds.trust >= 60 },
-              { label: "Null rate", ok: true },
-            ].map((c) => (
-              <div key={c.label} className="flex items-center justify-between rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-3 py-2">
-                <span className="text-[12.5px] text-[#d8d8de]">{c.label}</span>
-                {c.ok ? (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#34d399]">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Pass
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#fbbf24]">
-                    <AlertTriangle className="h-3.5 w-3.5" /> Warn
-                  </span>
-                )}
-              </div>
-            ))}
+        <div className="space-y-2">
+          <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Health signals</div>
+          <MetricRow
+            icon={Clock}
+            label="Freshness"
+            value={`${ds.pillars.freshness}/100`}
+            state={freshState}
+            hint={freshState === "ok" ? "Within SLA window" : freshState === "warn" ? `Lag detected (last refresh ${ds.updated})` : `Stale — last refresh ${ds.updated}`}
+          />
+          <MetricRow
+            icon={Network}
+            label="Lineage completeness"
+            value={`${ds.lineage.coverage}%`}
+            state={lineageState}
+            hint={`${ds.lineage.upstream} upstream · ${ds.lineage.downstream} downstream tracked`}
+          />
+          <MetricRow
+            icon={FlaskConical}
+            label="Quality tests"
+            value={`${ds.qualityTests.passed}/${ds.qualityTests.total}`}
+            state={qualityState}
+            hint={qualityState === "ok" ? "All checks passing" : qualityState === "warn" ? `${ds.qualityTests.total - ds.qualityTests.passed} checks failing` : `${ds.qualityTests.total - ds.qualityTests.passed} checks failing — review required`}
+          />
+        </div>
+
+        <div className="rounded-lg border border-[#1f1f24] bg-[#0a0a0d] p-3.5">
+          <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-white">
+            <Sparkles className="h-3.5 w-3.5 text-[#ff7a59]" /> Why this score?
+          </div>
+          <div className="mt-1.5 text-[11.5px] text-[#a1a1aa] leading-relaxed">
+            {trustExplanation(ds.trust)}
           </div>
         </div>
 
         <div className="flex flex-col gap-2 pt-1">
-          <EmberButton icon={ExternalLink}>Open in warehouse</EmberButton>
+          <Link href={`/datasets/${ds.name}`} className="block">
+            <EmberButton icon={ExternalLink}>Open dataset</EmberButton>
+          </Link>
           <GhostButton icon={GitBranch}>View lineage</GhostButton>
           <GhostButton icon={Users}>Contact owner</GhostButton>
         </div>
@@ -167,16 +210,22 @@ export default function Datasets() {
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<typeof sources[number]>("All");
   const [status, setStatus] = useState<typeof statuses[number]>("All");
+  const [sort, setSort] = useState<SortOption>("Highest Trust Score");
   const [selected, setSelected] = useState<Dataset | null>(datasets[0]);
 
   const filtered = useMemo(() => {
-    return datasets.filter((d) => {
+    const list = datasets.filter((d) => {
       if (source !== "All" && d.source !== source) return false;
       if (status !== "All" && d.status !== status) return false;
       if (query && !`${d.name} ${d.ownerName} ${d.domain}`.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
-  }, [query, source, status]);
+    const sorted = [...list];
+    if (sort === "Highest Trust Score") sorted.sort((a, b) => b.trust - a.trust);
+    else if (sort === "Lowest Trust Score") sorted.sort((a, b) => a.trust - b.trust);
+    else sorted.sort((a, b) => a.updatedMinutes - b.updatedMinutes);
+    return sorted;
+  }, [query, source, status, sort]);
 
   return (
     <>
@@ -200,7 +249,7 @@ export default function Datasets() {
               <div>
                 <h2 className="text-[18px] font-semibold tracking-tight">All datasets</h2>
                 <p className="mt-1 text-[12.5px] text-[#a1a1aa]">
-                  Showing {filtered.length} of {datasets.length} · sorted by trust score
+                  Showing {filtered.length} of {datasets.length} · {sort.toLowerCase()}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -209,9 +258,22 @@ export default function Datasets() {
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Filter by name, owner, domain..."
+                    placeholder="Search by name or owner..."
                     className="h-9 w-72 pl-8 pr-3 rounded-lg bg-[#0d0d10] border border-[#1f1f24] text-[12.5px] placeholder:text-[#5a5a63] text-white focus:outline-none focus:border-[#2a2a30] transition-colors"
                   />
+                </div>
+                <div className="relative">
+                  <ArrowUpDown className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5a5a63] pointer-events-none" />
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as SortOption)}
+                    className="appearance-none h-9 pl-8 pr-8 rounded-lg bg-[#0d0d10] border border-[#1f1f24] text-[12.5px] text-white focus:outline-none focus:border-[#2a2a30] transition-colors cursor-pointer hover:border-[#2a2a30]"
+                  >
+                    {sortOptions.map((o) => (
+                      <option key={o} value={o} className="bg-[#0d0d10]">{o}</option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5a5a63] text-[10px]">▾</span>
                 </div>
               </div>
             </div>

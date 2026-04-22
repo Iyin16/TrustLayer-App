@@ -10,7 +10,7 @@ export type Kpi = {
 
 export function toneClasses(tone: Kpi["tone"]) {
   switch (tone) {
-    case "ember": return { bg: "bg-[rgba(255,106,31,0.08)]", text: "text-[#ff6a1f]" };
+    case "ember": return { bg: "bg-[rgba(255,106,31,0.08)]", text: "text-[#ff4d2e]" };
     case "success": return { bg: "bg-[rgba(52,211,153,0.08)]", text: "text-[#34d399]" };
     case "danger": return { bg: "bg-[rgba(248,113,113,0.08)]", text: "text-[#f87171]" };
     case "warning": return { bg: "bg-[rgba(251,191,36,0.08)]", text: "text-[#fbbf24]" };
@@ -39,7 +39,7 @@ export function KpiCards({ items }: { items: Kpi[] }) {
             <div className="relative mt-5 text-[36px] font-semibold tracking-[-0.02em] leading-none text-white">
               {kpi.value}
             </div>
-            <div className="relative mt-4 flex items-center gap-1.5 text-[11.5px] text-[#8a8a93]">
+            <div className="relative mt-4 flex items-center gap-1.5 text-[11.5px] text-[#a1a1aa]">
               <ArrowUpRight className="h-3 w-3 text-[#6a6a73]" />
               {kpi.delta}
             </div>

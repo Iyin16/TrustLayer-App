@@ -1,6 +1,6 @@
 function trustColor(score: number) {
   if (score >= 85) return "text-[#34d399]";
-  if (score >= 65) return "text-[#ff6a1f]";
+  if (score >= 65) return "text-[#ff4d2e]";
   return "text-[#f87171]";
 }
 

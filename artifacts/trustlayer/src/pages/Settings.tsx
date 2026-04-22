@@ -30,13 +30,13 @@ function Toggle({ label, description, on }: { label: string; description: string
     <div className="flex items-start justify-between gap-4 py-4 border-b border-[#101014] last:border-b-0">
       <div>
         <div className="text-[13px] font-medium text-white">{label}</div>
-        <div className="mt-0.5 text-[12px] text-[#8a8a93]">{description}</div>
+        <div className="mt-0.5 text-[12px] text-[#a1a1aa]">{description}</div>
       </div>
       <button
         className={[
           "relative h-6 w-11 rounded-full transition-colors shrink-0 mt-0.5",
           on
-            ? "bg-gradient-to-r from-[#ff7a35] to-[#ff5a0f] shadow-[0_0_16px_-4px_rgba(255,106,31,0.7)]"
+            ? "bg-gradient-to-r from-[#ff5a35] to-[#ff3a1c] shadow-[0_0_16px_-4px_rgba(255,106,31,0.7)]"
             : "bg-[#1f1f24]",
         ].join(" ")}
       >
@@ -66,11 +66,11 @@ function SectionCard({
     <Card className="p-6">
       <div className="flex items-start gap-3.5">
         <div className="h-9 w-9 rounded-lg bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center shrink-0">
-          <Icon className="h-4 w-4 text-[#ff8a4a]" />
+          <Icon className="h-4 w-4 text-[#ff7a59]" />
         </div>
         <div>
           <h3 className="text-[15px] font-semibold tracking-tight text-white">{title}</h3>
-          <p className="mt-0.5 text-[12.5px] text-[#8a8a93]">{description}</p>
+          <p className="mt-0.5 text-[12.5px] text-[#a1a1aa]">{description}</p>
         </div>
       </div>
       <div className="mt-5">{children}</div>
@@ -156,7 +156,7 @@ export default function Settings() {
                 <div className="text-[13px] font-medium text-white">Production API key</div>
                 <div className="mt-0.5 text-[11.5px] text-[#5a5a63]">Last used 14 minutes ago</div>
               </div>
-              <code className="text-[11.5px] text-[#8a8a93] font-mono">tl_live_••••••••e4f2</code>
+              <code className="text-[11.5px] text-[#a1a1aa] font-mono">tl_live_••••••••e4f2</code>
             </div>
           </div>
           <div className="mt-3">

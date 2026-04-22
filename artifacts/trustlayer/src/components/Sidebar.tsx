@@ -30,16 +30,16 @@ function NavButton({ item, active }: { item: NavItem; active: boolean }) {
         "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all overflow-hidden",
         active
           ? "text-white bg-gradient-to-r from-[#1a1410] via-[#16161a] to-[#16161a] border border-[#2a1f18] shadow-[inset_0_1px_0_0_rgba(255,138,74,0.08),0_8px_20px_-12px_rgba(255,106,31,0.45)]"
-          : "text-[#8a8a93] hover:text-white hover:bg-[#101014] border border-transparent",
+          : "text-[#a1a1aa] hover:text-white hover:bg-[#101014] border border-transparent",
       ].join(" ")}
     >
       {active && (
         <>
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[2px] rounded-r bg-[#ff6a1f] shadow-[0_0_12px_rgba(255,106,31,0.8)]" />
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[2px] rounded-r bg-[#ff4d2e] shadow-[0_0_12px_rgba(255,106,31,0.8)]" />
           <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120px_40px_at_0%_50%,rgba(255,106,31,0.18),transparent_70%)]" />
         </>
       )}
-      <Icon className={["relative h-[18px] w-[18px]", active ? "text-[#ff8a4a] drop-shadow-[0_0_6px_rgba(255,106,31,0.6)]" : ""].join(" ")} />
+      <Icon className={["relative h-[18px] w-[18px]", active ? "text-[#ff7a59] drop-shadow-[0_0_6px_rgba(255,106,31,0.6)]" : ""].join(" ")} />
       <span className="relative">{item.label}</span>
     </Link>
   );
@@ -54,7 +54,7 @@ export function Sidebar() {
     <aside className="w-64 shrink-0 bg-[#0a0a0c] border-r border-[#16161a] flex flex-col h-screen sticky top-0">
       <div className="px-5 pt-5 pb-6">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[#ff6a1f] flex items-center justify-center shadow-[0_8px_24px_-6px_rgba(255,106,31,0.6)]">
+          <div className="h-10 w-10 rounded-xl bg-[#ff4d2e] flex items-center justify-center shadow-[0_8px_24px_-6px_rgba(255,106,31,0.6)]">
             <Shield className="h-5 w-5 text-white" strokeWidth={2.5} />
           </div>
           <span className="text-[17px] font-semibold tracking-tight">TrustLayer</span>
@@ -85,8 +85,8 @@ export function Sidebar() {
         <span className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-[radial-gradient(circle,rgba(255,106,31,0.18),transparent_70%)]" />
         <div className="relative flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="ember-pulse absolute inline-flex h-full w-full rounded-full bg-[#ff6a1f]"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff6a1f] shadow-[0_0_10px_rgba(255,106,31,0.9)]"></span>
+            <span className="ember-pulse absolute inline-flex h-full w-full rounded-full bg-[#ff4d2e]"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff4d2e] shadow-[0_0_10px_rgba(255,106,31,0.9)]"></span>
           </span>
           <span className="text-[12.5px] font-medium text-white">All systems operational</span>
         </div>

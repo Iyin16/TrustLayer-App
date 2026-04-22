@@ -20,13 +20,13 @@ import {
 import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
 import { TrustRing } from "../components/TrustRing";
-import { datasets, statusPill, type Dataset } from "../lib/data";
+import { datasets, statusPill, trustCounts, trustExplanation, type Dataset } from "../lib/data";
 
 const kpis: Kpi[] = [
-  { label: "Connected Sources", value: "4", delta: "Snowflake · BigQuery · Postgres · Redshift", icon: Database, tone: "ember" },
-  { label: "Healthy Datasets", value: "3", delta: "of 8 total", icon: ShieldCheck, tone: "success" },
-  { label: "Needs Review", value: "5", delta: "warning + at risk", icon: AlertTriangle, tone: "warning" },
-  { label: "Avg Freshness", value: "2.4h", delta: "since last sync", icon: Clock, tone: "danger" },
+  { label: "Connected Sources", value: "4", delta: "Snowflake · BigQuery · Postgres · Databricks", icon: Database, tone: "ember" },
+  { label: "Healthy", value: String(trustCounts.healthy), delta: "Score 80 – 100", icon: ShieldCheck, tone: "success" },
+  { label: "Warning", value: String(trustCounts.warning), delta: "Score 60 – 79", icon: AlertTriangle, tone: "warning" },
+  { label: "At Risk", value: String(trustCounts.atRisk), delta: "Score 0 – 59", icon: Clock, tone: "danger" },
 ];
 
 const sources = ["All", "Snowflake", "BigQuery", "Postgres", "Redshift", "Databricks"] as const;
@@ -34,11 +34,11 @@ const statuses = ["All", "Healthy", "Warning", "At Risk"] as const;
 
 function trustBadge(score: number) {
   const tone =
-    score >= 85
-      ? "bg-[rgba(52,211,153,0.10)] text-[#34d399] border-[rgba(52,211,153,0.25)]"
-      : score >= 65
-      ? "bg-[rgba(255,106,31,0.10)] text-[#ff7a59] border-[rgba(255,106,31,0.25)]"
-      : "bg-[rgba(248,113,113,0.10)] text-[#f87171] border-[rgba(248,113,113,0.25)]";
+    score >= 80
+      ? "bg-[rgba(52,211,153,0.10)] text-[#34d399] border-[rgba(52,211,153,0.28)]"
+      : score >= 60
+      ? "bg-[rgba(251,191,36,0.10)] text-[#fbbf24] border-[rgba(251,191,36,0.28)]"
+      : "bg-[rgba(248,113,113,0.10)] text-[#f87171] border-[rgba(248,113,113,0.28)]";
   return (
     <span className={["inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold border", tone].join(" ")}>
       <span className="h-1 w-1 rounded-full bg-current" />
@@ -93,8 +93,8 @@ function DetailPanel({ ds, onClose }: { ds: Dataset; onClose: () => void }) {
           <TrustRing score={ds.trust} size={64} />
           <div>
             <div className="text-[12px] font-medium text-[#a8a8b3]">Trust Score</div>
-            <div className="mt-0.5 text-[11.5px] text-[#5a5a63]">
-              {ds.trust >= 85 ? "Excellent — within target SLA" : ds.trust >= 65 ? "Stable — minor warnings" : "Below threshold — needs review"}
+            <div className="mt-0.5 text-[11.5px] text-[#a1a1aa] max-w-[210px] leading-relaxed">
+              {trustExplanation(ds.trust)}
             </div>
           </div>
         </div>
@@ -133,8 +133,8 @@ function DetailPanel({ ds, onClose }: { ds: Dataset; onClose: () => void }) {
           <div className="space-y-2">
             {[
               { label: "Schema integrity", ok: true },
-              { label: "Freshness SLA", ok: ds.trust >= 65 },
-              { label: "Row volume anomaly", ok: ds.trust >= 70 },
+              { label: "Freshness SLA", ok: ds.trust >= 60 },
+              { label: "Row volume anomaly", ok: ds.trust >= 60 },
               { label: "Null rate", ok: true },
             ].map((c) => (
               <div key={c.label} className="flex items-center justify-between rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-3 py-2">

@@ -2,8 +2,8 @@ export function TrustRing({ score, size = 44 }: { score: number; size?: number }
   const r = (size - 8) / 2;
   const circumference = 2 * Math.PI * r;
   const offset = circumference - (score / 100) * circumference;
-  const color = score >= 85 ? "#34d399" : score >= 65 ? "#fbbf24" : "#f87171";
-  const glow = score >= 85 ? "rgba(52,211,153,0.55)" : score >= 65 ? "rgba(251,191,36,0.55)" : "rgba(248,113,113,0.55)";
+  const color = score >= 80 ? "#34d399" : score >= 60 ? "#fbbf24" : "#f87171";
+  const glow = score >= 80 ? "rgba(52,211,153,0.55)" : score >= 60 ? "rgba(251,191,36,0.55)" : "rgba(248,113,113,0.55)";
   return (
     <div className="relative" style={{ height: size, width: size }}>
       <span

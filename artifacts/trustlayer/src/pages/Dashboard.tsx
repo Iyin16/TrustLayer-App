@@ -1,13 +1,15 @@
-import { Database as DatabaseIcon, TrendingUp, AlertTriangle, Activity, Download, Plus } from "lucide-react";
+import { TrendingUp, ShieldCheck, AlertTriangle, ShieldAlert, Download, Plus } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
 import { DatasetTable } from "../components/DatasetTable";
+import { datasets, trustCounts } from "../lib/data";
 
+const total = datasets.length;
 const kpis: Kpi[] = [
-  { label: "Total Datasets", value: "8", delta: "+12 this month", icon: DatabaseIcon, tone: "ember" },
-  { label: "Avg Trust Score", value: "74", delta: "+3.2 vs last week", icon: TrendingUp, tone: "success" },
-  { label: "Risk Alerts", value: "4", delta: "2 new today", icon: AlertTriangle, tone: "danger" },
-  { label: "Freshness Health", value: "71%", delta: "Stable", icon: Activity, tone: "warning" },
+  { label: "Avg Trust Score", value: String(trustCounts.avg), delta: `Across ${total} datasets`, icon: TrendingUp, tone: "ember" },
+  { label: "Healthy (80–100)", value: String(trustCounts.healthy), delta: "Reliable for reporting", icon: ShieldCheck, tone: "success" },
+  { label: "Warning (60–79)", value: String(trustCounts.warning), delta: "Usable, needs attention", icon: AlertTriangle, tone: "warning" },
+  { label: "At Risk (0–59)", value: String(trustCounts.atRisk), delta: "Review before use", icon: ShieldAlert, tone: "danger" },
 ];
 
 export default function Dashboard() {

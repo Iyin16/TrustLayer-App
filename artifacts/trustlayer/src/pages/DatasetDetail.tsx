@@ -18,17 +18,17 @@ import {
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { TrustRing } from "../components/TrustRing";
-import { datasets, statusPill } from "../lib/data";
+import { datasets, statusPill, trustExplanation } from "../lib/data";
 
 function trustTier(trust: number) {
-  if (trust >= 85) return { label: "High Trust", tone: "bg-[rgba(255,106,31,0.10)] text-[#ff7a59] border-[rgba(255,106,31,0.30)]" };
-  if (trust >= 65) return { label: "Moderate Trust", tone: "bg-[rgba(251,191,36,0.10)] text-[#fbbf24] border-[rgba(251,191,36,0.25)]" };
-  return { label: "Low Trust", tone: "bg-[rgba(248,113,113,0.10)] text-[#f87171] border-[rgba(248,113,113,0.25)]" };
+  if (trust >= 80) return { label: "Healthy · 80–100", tone: "bg-[rgba(52,211,153,0.10)] text-[#34d399] border-[rgba(52,211,153,0.28)]" };
+  if (trust >= 60) return { label: "Warning · 60–79", tone: "bg-[rgba(251,191,36,0.10)] text-[#fbbf24] border-[rgba(251,191,36,0.28)]" };
+  return { label: "At Risk · 0–59", tone: "bg-[rgba(248,113,113,0.10)] text-[#f87171] border-[rgba(248,113,113,0.28)]" };
 }
 
 function pillarBar(value: number) {
-  const color = value >= 65 ? "from-[#ff7a59] to-[#ff3a1c]" : value >= 40 ? "from-[#fbbf24] to-[#f59e0b]" : "from-[#f87171] to-[#ef4444]";
-  const glow = value >= 65 ? "rgba(255,77,46,0.55)" : value >= 40 ? "rgba(251,191,36,0.5)" : "rgba(248,113,113,0.5)";
+  const color = value >= 80 ? "from-[#34d399] to-[#10b981]" : value >= 60 ? "from-[#fbbf24] to-[#f59e0b]" : "from-[#f87171] to-[#ef4444]";
+  const glow = value >= 80 ? "rgba(52,211,153,0.5)" : value >= 60 ? "rgba(251,191,36,0.5)" : "rgba(248,113,113,0.5)";
   return (
     <div className="relative h-1.5 w-full rounded-full bg-[#16161a] overflow-hidden">
       <div
@@ -50,7 +50,7 @@ function PillarCard({
   value: number;
   hint: string;
 }) {
-  const valueColor = value >= 65 ? "text-[#ff7a59]" : value >= 40 ? "text-[#fbbf24]" : "text-[#f87171]";
+  const valueColor = value >= 80 ? "text-[#34d399]" : value >= 60 ? "text-[#fbbf24]" : "text-[#f87171]";
   return (
     <div className="relative rounded-2xl border border-[#1f1f24] bg-gradient-to-b from-[#121215] to-[#0a0a0d] p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_24px_48px_-24px_rgba(0,0,0,0.8)] overflow-hidden">
       <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
@@ -152,7 +152,7 @@ export default function DatasetDetail() {
               {[
                 { label: "Schema integrity", ok: !schemaRisk, sub: schemaRisk ? "1 column dropped upstream" : "All columns match contract" },
                 { label: "Freshness SLA", ok: !stale, sub: stale ? `Lag exceeded SLA (last refresh ${ds.updated})` : "Within SLA window" },
-                { label: "Row volume anomaly", ok: ds.pillars.volume >= 70, sub: ds.pillars.volume >= 70 ? "Within ±5% of baseline" : "Below expected baseline" },
+                { label: "Row volume anomaly", ok: ds.pillars.volume >= 60, sub: ds.pillars.volume >= 60 ? "Within ±5% of baseline" : "Below expected baseline" },
                 { label: "Null rate", ok: true, sub: "All required columns under threshold" },
               ].map((c) => (
                 <div key={c.label} className="flex items-center justify-between px-5 py-3.5">

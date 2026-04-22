@@ -112,14 +112,20 @@ function Sidebar() {
               <button
                 key={item.label}
                 className={[
-                  "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-colors",
+                  "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all overflow-hidden",
                   item.active
-                    ? "bg-[#16161a] text-white"
-                    : "text-[#8a8a93] hover:text-white hover:bg-[#101014]",
+                    ? "text-white bg-gradient-to-r from-[#1a1410] via-[#16161a] to-[#16161a] border border-[#2a1f18] shadow-[inset_0_1px_0_0_rgba(255,138,74,0.08),0_8px_20px_-12px_rgba(255,106,31,0.45)]"
+                    : "text-[#8a8a93] hover:text-white hover:bg-[#101014] border border-transparent",
                 ].join(" ")}
               >
-                <Icon className={["h-[18px] w-[18px]", item.active ? "text-[#ff6a1f]" : ""].join(" ")} />
-                <span>{item.label}</span>
+                {item.active && (
+                  <>
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[2px] rounded-r bg-[#ff6a1f] shadow-[0_0_12px_rgba(255,106,31,0.8)]" />
+                    <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120px_40px_at_0%_50%,rgba(255,106,31,0.18),transparent_70%)]" />
+                  </>
+                )}
+                <Icon className={["relative h-[18px] w-[18px]", item.active ? "text-[#ff8a4a] drop-shadow-[0_0_6px_rgba(255,106,31,0.6)]" : ""].join(" ")} />
+                <span className="relative">{item.label}</span>
               </button>
             );
           })}
@@ -127,15 +133,16 @@ function Sidebar() {
       </div>
 
       {/* System status */}
-      <div className="m-3 rounded-xl border border-[#1f1f24] bg-[#0d0d10] p-3.5">
-        <div className="flex items-center gap-2">
+      <div className="relative m-3 rounded-xl border border-[#1f1f24] bg-gradient-to-b from-[#101014] to-[#0a0a0d] p-3.5 shadow-[0_10px_30px_-20px_rgba(255,106,31,0.4),inset_0_1px_0_0_rgba(255,255,255,0.03)] overflow-hidden">
+        <span className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-[radial-gradient(circle,rgba(255,106,31,0.18),transparent_70%)]" />
+        <div className="relative flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6a1f] opacity-60"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff6a1f]"></span>
+            <span className="ember-pulse absolute inline-flex h-full w-full rounded-full bg-[#ff6a1f]"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff6a1f] shadow-[0_0_10px_rgba(255,106,31,0.9)]"></span>
           </span>
           <span className="text-[12.5px] font-medium text-white">All systems operational</span>
         </div>
-        <div className="mt-1.5 text-[11px] text-[#5a5a63]">Last sync · 2 min ago</div>
+        <div className="relative mt-1.5 text-[11px] text-[#6a6a73]">Last sync · 2 min ago</div>
       </div>
     </aside>
   );
@@ -185,28 +192,43 @@ function Header() {
 
 function HeroSection() {
   return (
-    <div className="flex items-end justify-between gap-6 flex-wrap">
-      <div>
-        <div className="text-[10.5px] font-semibold tracking-[0.18em] text-[#5a5a63] uppercase">
-          Workspace Overview
-        </div>
-        <h1 className="mt-3 text-[34px] leading-[1.1] font-semibold tracking-tight">
-          Good morning, <span className="text-[#ff6a1f]">Alex</span>
-        </h1>
-        <p className="mt-2 text-[14px] text-[#8a8a93]">
-          Here's the trust state of your data across 4 warehouses.
-        </p>
+    <div className="relative">
+      {/* Ambient ember glow behind hero */}
+      <div className="pointer-events-none absolute -inset-x-8 -top-16 -bottom-8 -z-10 overflow-hidden">
+        <div className="absolute left-[-4%] top-0 h-[420px] w-[680px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,106,31,0.16),rgba(255,106,31,0.04)_40%,transparent_70%)] blur-2xl ember-drift" />
+        <div className="absolute right-[8%] -top-10 h-[360px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,138,74,0.10),transparent_65%)] blur-2xl" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[rgba(255,106,31,0.18)] to-transparent" />
       </div>
 
-      <div className="flex items-center gap-2.5">
-        <button className="h-10 px-4 rounded-lg border border-[#2a2a30] bg-[#0d0d10] hover:bg-[#16161a] text-[13px] font-medium text-white flex items-center gap-2 transition-colors">
-          <Download className="h-4 w-4" />
-          Export report
-        </button>
-        <button className="h-10 px-4 rounded-lg bg-[#ff6a1f] hover:bg-[#ff7a35] text-[13px] font-semibold text-white flex items-center gap-2 shadow-[0_8px_24px_-8px_rgba(255,106,31,0.7)] transition-colors">
-          <Plus className="h-4 w-4" strokeWidth={2.5} />
-          New dataset
-        </button>
+      <div className="flex items-end justify-between gap-6 flex-wrap">
+        <div>
+          <div className="text-[10.5px] font-semibold tracking-[0.22em] text-[#6a6a73] uppercase">
+            <span className="bg-gradient-to-r from-[#8a8a93] to-[#5a5a63] bg-clip-text text-transparent">Workspace Overview</span>
+          </div>
+          <h1 className="mt-3 text-[36px] leading-[1.05] font-semibold tracking-[-0.02em] text-white">
+            Good morning,{" "}
+            <span className="bg-gradient-to-r from-[#ff8a4a] via-[#ff6a1f] to-[#ff5a0f] bg-clip-text text-transparent drop-shadow-[0_0_24px_rgba(255,106,31,0.35)]">
+              Alex
+            </span>
+          </h1>
+          <p className="mt-2.5 text-[14px] text-[#9a9aa3] leading-relaxed">
+            Here's the trust state of your data across 4 warehouses.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button className="h-10 px-4 rounded-lg border border-[#2a2a30] bg-[#0d0d10]/80 backdrop-blur hover:bg-[#16161a] hover:border-[#3a3a40] text-[13px] font-medium text-white flex items-center gap-2 transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+            <Download className="h-4 w-4" />
+            Export report
+          </button>
+          <div className="relative">
+            <span className="pointer-events-none absolute -inset-3 rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,106,31,0.45),transparent_65%)] blur-xl" />
+            <button className="relative h-10 px-4 rounded-lg bg-gradient-to-b from-[#ff7a35] to-[#ff5a0f] hover:from-[#ff8a4a] hover:to-[#ff6a1f] text-[13px] font-semibold text-white flex items-center gap-2 transition-all shadow-[0_10px_30px_-6px_rgba(255,106,31,0.55),0_0_0_1px_rgba(255,138,74,0.4)_inset,0_1px_0_0_rgba(255,255,255,0.25)_inset]">
+              <Plus className="h-4 w-4" strokeWidth={2.75} />
+              New dataset
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -221,17 +243,23 @@ function KpiCards() {
         return (
           <div
             key={kpi.label}
-            className="group relative rounded-2xl border border-[#1f1f24] bg-gradient-to-b from-[#101014] to-[#0b0b0e] p-5 hover:border-[#2a2a30] transition-colors shadow-[0_2px_0_0_rgba(255,255,255,0.02)_inset]"
+            className="group relative rounded-2xl border border-[#1f1f24] bg-gradient-to-b from-[#121215] via-[#0e0e12] to-[#0a0a0d] p-5 hover:border-[#2a2a30] transition-all shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_24px_48px_-24px_rgba(0,0,0,0.8),0_2px_8px_-2px_rgba(0,0,0,0.4)] overflow-hidden"
           >
-            <div className="flex items-start justify-between">
-              <div className="text-[13px] font-medium text-[#a8a8b3]">{kpi.label}</div>
-              <div className={["h-8 w-8 rounded-lg flex items-center justify-center", t.bg].join(" ")}>
+            {/* subtle top sheen */}
+            <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+            {/* corner glow tinted by tone */}
+            <span className={["pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full opacity-60 blur-2xl", t.bg].join(" ")} />
+            <div className="relative flex items-start justify-between">
+              <div className="text-[13px] font-medium text-[#b0b0bb] tracking-tight">{kpi.label}</div>
+              <div className={["h-8 w-8 rounded-lg flex items-center justify-center ring-1 ring-white/[0.04]", t.bg].join(" ")}>
                 <Icon className={["h-4 w-4", t.text].join(" ")} />
               </div>
             </div>
-            <div className="mt-5 text-[34px] font-semibold tracking-tight leading-none">{kpi.value}</div>
-            <div className="mt-4 flex items-center gap-1.5 text-[11.5px] text-[#8a8a93]">
-              <ArrowUpRight className="h-3 w-3 text-[#5a5a63]" />
+            <div className="relative mt-5 text-[36px] font-semibold tracking-[-0.02em] leading-none text-white">
+              {kpi.value}
+            </div>
+            <div className="relative mt-4 flex items-center gap-1.5 text-[11.5px] text-[#8a8a93]">
+              <ArrowUpRight className="h-3 w-3 text-[#6a6a73]" />
               {kpi.delta}
             </div>
           </div>
@@ -245,9 +273,15 @@ function TrustRing({ score }: { score: number }) {
   const c = trustColor(score);
   const circumference = 2 * Math.PI * 18;
   const offset = circumference - (score / 100) * circumference;
+  const glow =
+    score >= 85 ? "rgba(52,211,153,0.55)" : score >= 65 ? "rgba(255,106,31,0.65)" : "rgba(248,113,113,0.55)";
   return (
     <div className="relative h-11 w-11">
-      <svg className="h-11 w-11 -rotate-90" viewBox="0 0 44 44">
+      <span
+        className="pointer-events-none absolute inset-0 rounded-full blur-md opacity-70"
+        style={{ background: `radial-gradient(circle, ${glow}, transparent 65%)` }}
+      />
+      <svg className="relative h-11 w-11 -rotate-90" viewBox="0 0 44 44">
         <circle cx="22" cy="22" r="18" stroke="#1f1f24" strokeWidth="3" fill="none" />
         <circle
           cx="22"
@@ -260,9 +294,10 @@ function TrustRing({ score }: { score: number }) {
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
+          style={{ filter: `drop-shadow(0 0 4px ${glow})` }}
         />
       </svg>
-      <div className={["absolute inset-0 flex items-center justify-center text-[11px] font-semibold", c.text].join(" ")}>
+      <div className={["absolute inset-0 flex items-center justify-center text-[11.5px] font-semibold tracking-tight", c.text].join(" ")}>
         {score}
       </div>
     </div>
@@ -271,7 +306,8 @@ function TrustRing({ score }: { score: number }) {
 
 function DatasetTable() {
   return (
-    <div className="rounded-2xl border border-[#1f1f24] bg-gradient-to-b from-[#0d0d10] to-[#0a0a0c] overflow-hidden">
+    <div className="relative rounded-2xl border border-[#1f1f24] bg-gradient-to-b from-[#0e0e12] to-[#0a0a0d] overflow-hidden shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_30px_60px_-30px_rgba(0,0,0,0.9)]">
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
       <div className="px-6 pt-6 pb-5 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-[18px] font-semibold tracking-tight">Datasets</h2>

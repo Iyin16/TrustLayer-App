@@ -113,7 +113,7 @@ export default function Lineage() {
       />
       <KpiCards items={kpis} />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 items-start">
         <Card>
           <div className="px-6 pt-6 pb-4 flex items-end justify-between gap-4 flex-wrap border-b border-[#16161a]">
             <div>
@@ -204,7 +204,7 @@ export default function Lineage() {
           </div>
         </Card>
 
-        <div className="xl:sticky xl:top-24 space-y-5">
+        <div className="lg:sticky lg:top-24 space-y-5">
           <Card className="p-0 overflow-hidden">
             <div className="relative px-6 pt-6 pb-5 border-b border-[#16161a]">
               <span className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,106,31,0.18),transparent_65%)] blur-2xl" />

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "wouter";
 import {
   Plus,
   Upload,
@@ -14,6 +15,7 @@ import {
   Users,
   CheckCircle2,
   Activity,
+  ArrowUpRight,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
@@ -257,35 +259,37 @@ export default function Datasets() {
               filtered.map((ds) => {
                 const active = selected?.name === ds.name;
                 return (
-                  <button
+                  <div
                     key={ds.name}
-                    onClick={() => setSelected(ds)}
+                    onMouseEnter={() => setSelected(ds)}
                     className={[
-                      "w-full text-left grid grid-cols-[2fr_1.4fr_1.2fr_0.8fr_1fr] items-center px-6 py-4 border-b border-[#101014] last:border-b-0 transition-colors relative",
+                      "group grid grid-cols-[2fr_1.4fr_1.2fr_0.8fr_1fr_auto] items-center px-6 py-4 border-b border-[#101014] last:border-b-0 transition-colors relative",
                       active ? "bg-[#101014]" : "hover:bg-[#101014]/60",
                     ].join(" ")}
                   >
                     {active && <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r bg-[#ff6a1f] shadow-[0_0_10px_rgba(255,106,31,0.7)]" />}
-                    <div>
+                    <Link href={`/datasets/${ds.name}`} className="absolute inset-0 z-0" aria-label={`Open ${ds.name}`} />
+                    <div className="relative pointer-events-none">
                       <div className="flex items-center gap-2">
-                        <span className="text-[13.5px] font-medium text-white">{ds.name}</span>
+                        <span className="text-[13.5px] font-medium text-white group-hover:text-[#ff8a4a] transition-colors">{ds.name}</span>
                         {trustBadge(ds.trust)}
                       </div>
                       <div className="text-[11.5px] text-[#5a5a63] mt-0.5">{ds.source} · {ds.domain}</div>
                     </div>
-                    <div className="flex items-center gap-2.5">
+                    <div className="relative pointer-events-none flex items-center gap-2.5">
                       <div className="h-7 w-7 rounded-full bg-[#1f1f24] flex items-center justify-center text-[10.5px] font-semibold text-[#a8a8b3]">{ds.ownerInitials}</div>
                       <span className="text-[13px] text-[#d8d8de]">{ds.ownerName}</span>
                     </div>
-                    <div className="text-[12.5px] text-[#8a8a93]">{ds.updated}</div>
-                    <div><TrustRing score={ds.trust} /></div>
-                    <div>
+                    <div className="relative pointer-events-none text-[12.5px] text-[#8a8a93]">{ds.updated}</div>
+                    <div className="relative pointer-events-none"><TrustRing score={ds.trust} /></div>
+                    <div className="relative pointer-events-none">
                       <span className={["inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium", statusPill(ds.status)].join(" ")}>
                         <span className="h-1.5 w-1.5 rounded-full bg-current" />
                         {ds.status}
                       </span>
                     </div>
-                  </button>
+                    <ArrowUpRight className="relative pointer-events-none h-4 w-4 text-[#3a3a40] group-hover:text-[#ff8a4a] transition-colors ml-2" />
+                  </div>
                 );
               })
             )}

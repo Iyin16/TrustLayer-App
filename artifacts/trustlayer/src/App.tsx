@@ -2,6 +2,7 @@ import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Datasets from "./pages/Datasets";
+import DatasetDetail from "./pages/DatasetDetail";
 import Lineage from "./pages/Lineage";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/" component={() => <Redirect to="/dashboard" />} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/datasets" component={Datasets} />
+          <Route path="/datasets/:name" component={DatasetDetail} />
           <Route path="/lineage" component={Lineage} />
           <Route path="/assistant" component={Assistant} />
           <Route path="/settings" component={Settings} />

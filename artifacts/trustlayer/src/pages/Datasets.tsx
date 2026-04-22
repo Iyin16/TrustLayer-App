@@ -1,7 +1,24 @@
-import { Plus, Upload, Database, ShieldCheck, AlertTriangle, Clock } from "lucide-react";
-import { PageHeader, EmberButton, GhostButton } from "../components/Layout";
+import { useMemo, useState } from "react";
+import {
+  Plus,
+  Upload,
+  Database,
+  ShieldCheck,
+  AlertTriangle,
+  Clock,
+  Search,
+  Filter,
+  X,
+  ExternalLink,
+  GitBranch,
+  Users,
+  CheckCircle2,
+  Activity,
+} from "lucide-react";
+import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
-import { DatasetTable } from "../components/DatasetTable";
+import { TrustRing } from "../components/TrustRing";
+import { datasets, statusPill, type Dataset } from "../lib/data";
 
 const kpis: Kpi[] = [
   { label: "Connected Sources", value: "4", delta: "Snowflake · BigQuery · Postgres · Redshift", icon: Database, tone: "ember" },
@@ -10,7 +27,155 @@ const kpis: Kpi[] = [
   { label: "Avg Freshness", value: "2.4h", delta: "since last sync", icon: Clock, tone: "danger" },
 ];
 
+const sources = ["All", "Snowflake", "BigQuery", "Postgres", "Redshift", "Databricks"] as const;
+const statuses = ["All", "Healthy", "Warning", "At Risk"] as const;
+
+function trustBadge(score: number) {
+  const tone =
+    score >= 85
+      ? "bg-[rgba(52,211,153,0.10)] text-[#34d399] border-[rgba(52,211,153,0.25)]"
+      : score >= 65
+      ? "bg-[rgba(255,106,31,0.10)] text-[#ff8a4a] border-[rgba(255,106,31,0.25)]"
+      : "bg-[rgba(248,113,113,0.10)] text-[#f87171] border-[rgba(248,113,113,0.25)]";
+  return (
+    <span className={["inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold border", tone].join(" ")}>
+      <span className="h-1 w-1 rounded-full bg-current" />
+      {score}
+    </span>
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        "h-8 px-3 rounded-full text-[12px] font-medium transition-all whitespace-nowrap",
+        active
+          ? "bg-gradient-to-b from-[#241712] to-[#1a1410] text-white border border-[#3a2418] shadow-[inset_0_1px_0_0_rgba(255,138,74,0.12),0_4px_14px_-6px_rgba(255,106,31,0.5)]"
+          : "bg-[#0d0d10] text-[#9a9aa3] border border-[#1f1f24] hover:text-white hover:border-[#2a2a30]",
+      ].join(" ")}
+    >
+      {children}
+    </button>
+  );
+}
+
+function DetailPanel({ ds, onClose }: { ds: Dataset; onClose: () => void }) {
+  return (
+    <Card className="p-0 overflow-hidden">
+      <div className="relative px-6 pt-6 pb-5 border-b border-[#16161a]">
+        <span className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,106,31,0.18),transparent_65%)] blur-2xl" />
+        <div className="relative flex items-start justify-between">
+          <div>
+            <div className="text-[10.5px] font-semibold tracking-[0.18em] uppercase text-[#5a5a63]">Dataset</div>
+            <h3 className="mt-2 text-[20px] font-semibold tracking-tight text-white">{ds.name}</h3>
+            <div className="mt-1 text-[12.5px] text-[#8a8a93]">{ds.source} · {ds.domain}</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-[#8a8a93] hover:text-white hover:bg-[#101014] transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="relative mt-5 flex items-center gap-4">
+          <TrustRing score={ds.trust} size={64} />
+          <div>
+            <div className="text-[12px] font-medium text-[#a8a8b3]">Trust Score</div>
+            <div className="mt-0.5 text-[11.5px] text-[#5a5a63]">
+              {ds.trust >= 85 ? "Excellent — within target SLA" : ds.trust >= 65 ? "Stable — minor warnings" : "Below threshold — needs review"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6 py-5 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg border border-[#1f1f24] bg-[#0d0d10] p-3">
+            <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Owner</div>
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="h-6 w-6 rounded-full bg-[#1f1f24] flex items-center justify-center text-[9.5px] font-semibold text-[#a8a8b3]">{ds.ownerInitials}</div>
+              <span className="text-[12.5px] text-white">{ds.ownerName}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-[#1f1f24] bg-[#0d0d10] p-3">
+            <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Updated</div>
+            <div className="mt-1.5 text-[12.5px] text-white">{ds.updated}</div>
+          </div>
+          <div className="rounded-lg border border-[#1f1f24] bg-[#0d0d10] p-3">
+            <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Status</div>
+            <div className="mt-1.5">
+              <span className={["inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium", statusPill(ds.status)].join(" ")}>
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                {ds.status}
+              </span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-[#1f1f24] bg-[#0d0d10] p-3">
+            <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Rows</div>
+            <div className="mt-1.5 text-[12.5px] text-white">{(ds.trust * 142_318).toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold mb-2">Recent checks</div>
+          <div className="space-y-2">
+            {[
+              { label: "Schema integrity", ok: true },
+              { label: "Freshness SLA", ok: ds.trust >= 65 },
+              { label: "Row volume anomaly", ok: ds.trust >= 70 },
+              { label: "Null rate", ok: true },
+            ].map((c) => (
+              <div key={c.label} className="flex items-center justify-between rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-3 py-2">
+                <span className="text-[12.5px] text-[#d8d8de]">{c.label}</span>
+                {c.ok ? (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#34d399]">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Pass
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#fbbf24]">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Warn
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 pt-1">
+          <EmberButton icon={ExternalLink}>Open in warehouse</EmberButton>
+          <GhostButton icon={GitBranch}>View lineage</GhostButton>
+          <GhostButton icon={Users}>Contact owner</GhostButton>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function Datasets() {
+  const [query, setQuery] = useState("");
+  const [source, setSource] = useState<typeof sources[number]>("All");
+  const [status, setStatus] = useState<typeof statuses[number]>("All");
+  const [selected, setSelected] = useState<Dataset | null>(datasets[0]);
+
+  const filtered = useMemo(() => {
+    return datasets.filter((d) => {
+      if (source !== "All" && d.source !== source) return false;
+      if (status !== "All" && d.status !== status) return false;
+      if (query && !`${d.name} ${d.ownerName} ${d.domain}`.toLowerCase().includes(query.toLowerCase())) return false;
+      return true;
+    });
+  }, [query, source, status]);
+
   return (
     <>
       <PageHeader
@@ -25,7 +190,122 @@ export default function Datasets() {
         }
       />
       <KpiCards items={kpis} />
-      <DatasetTable title="All datasets" subtitle="Showing 8 of 8 · sorted by trust score" />
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-5 items-start">
+        <Card>
+          <div className="px-6 pt-6 pb-5 space-y-5">
+            <div className="flex items-end justify-between gap-4 flex-wrap">
+              <div>
+                <h2 className="text-[18px] font-semibold tracking-tight">All datasets</h2>
+                <p className="mt-1 text-[12.5px] text-[#8a8a93]">
+                  Showing {filtered.length} of {datasets.length} · sorted by trust score
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5a5a63]" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Filter by name, owner, domain..."
+                    className="h-9 w-72 pl-8 pr-3 rounded-lg bg-[#0d0d10] border border-[#1f1f24] text-[12.5px] placeholder:text-[#5a5a63] text-white focus:outline-none focus:border-[#2a2a30] transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#5a5a63]">
+                <Filter className="h-3 w-3" /> Source
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {sources.map((s) => (
+                  <FilterChip key={s} active={source === s} onClick={() => setSource(s)}>{s}</FilterChip>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#5a5a63]">
+                <Activity className="h-3 w-3" /> Status
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {statuses.map((s) => (
+                  <FilterChip key={s} active={status === s} onClick={() => setStatus(s)}>{s}</FilterChip>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-[#16161a]">
+            <div className="grid grid-cols-[2fr_1.4fr_1.2fr_0.8fr_1fr] px-6 py-3 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#5a5a63] border-b border-[#16161a]">
+              <div>Dataset</div>
+              <div>Owner</div>
+              <div>Last Updated</div>
+              <div>Trust</div>
+              <div>Status</div>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="px-6 py-16 text-center">
+                <div className="mx-auto h-12 w-12 rounded-xl bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center">
+                  <Search className="h-5 w-5 text-[#ff8a4a]" />
+                </div>
+                <div className="mt-4 text-[14px] font-semibold text-white">No datasets match these filters</div>
+                <div className="mt-1 text-[12.5px] text-[#8a8a93]">Try clearing search or selecting "All".</div>
+              </div>
+            ) : (
+              filtered.map((ds) => {
+                const active = selected?.name === ds.name;
+                return (
+                  <button
+                    key={ds.name}
+                    onClick={() => setSelected(ds)}
+                    className={[
+                      "w-full text-left grid grid-cols-[2fr_1.4fr_1.2fr_0.8fr_1fr] items-center px-6 py-4 border-b border-[#101014] last:border-b-0 transition-colors relative",
+                      active ? "bg-[#101014]" : "hover:bg-[#101014]/60",
+                    ].join(" ")}
+                  >
+                    {active && <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r bg-[#ff6a1f] shadow-[0_0_10px_rgba(255,106,31,0.7)]" />}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13.5px] font-medium text-white">{ds.name}</span>
+                        {trustBadge(ds.trust)}
+                      </div>
+                      <div className="text-[11.5px] text-[#5a5a63] mt-0.5">{ds.source} · {ds.domain}</div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-7 w-7 rounded-full bg-[#1f1f24] flex items-center justify-center text-[10.5px] font-semibold text-[#a8a8b3]">{ds.ownerInitials}</div>
+                      <span className="text-[13px] text-[#d8d8de]">{ds.ownerName}</span>
+                    </div>
+                    <div className="text-[12.5px] text-[#8a8a93]">{ds.updated}</div>
+                    <div><TrustRing score={ds.trust} /></div>
+                    <div>
+                      <span className={["inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium", statusPill(ds.status)].join(" ")}>
+                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        {ds.status}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </Card>
+
+        <div className="xl:sticky xl:top-24">
+          {selected ? (
+            <DetailPanel ds={selected} onClose={() => setSelected(null)} />
+          ) : (
+            <Card className="p-8 text-center">
+              <div className="mx-auto h-12 w-12 rounded-xl bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center">
+                <Database className="h-5 w-5 text-[#ff8a4a]" />
+              </div>
+              <div className="mt-4 text-[14px] font-semibold text-white">Select a dataset</div>
+              <div className="mt-1 text-[12.5px] text-[#8a8a93]">Click any row to inspect ownership, checks, and lineage.</div>
+            </Card>
+          )}
+        </div>
+      </div>
     </>
   );
 }

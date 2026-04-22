@@ -12,6 +12,9 @@ import {
   AlertTriangle,
   ExternalLink,
   Play,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
@@ -90,8 +93,16 @@ function nodeFor(id: string) {
   return nodes.find((n) => n.id === id)!;
 }
 
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 1.6;
+const ZOOM_STEP = 0.15;
+
 export default function Lineage() {
   const [selectedId, setSelectedId] = useState<string>("attrib");
+  const [zoom, setZoom] = useState(1);
+  const zoomIn = () => setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)));
+  const zoomOut = () => setZoom((z) => Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2)));
+  const zoomReset = () => setZoom(1);
   const selected = nodeFor(selectedId);
   const upstream = edges.filter(([, t]) => t === selectedId).map(([s]) => nodeFor(s));
   const downstream = edges.filter(([s]) => s === selectedId).map(([, t]) => nodeFor(t));
@@ -139,8 +150,46 @@ export default function Lineage() {
             <span className="pointer-events-none absolute -top-20 left-1/4 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(255,106,31,0.12),transparent_70%)] blur-2xl" />
             <span className="pointer-events-none absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(255,138,74,0.08),transparent_70%)] blur-2xl" />
 
-            <div className="relative overflow-x-auto">
-              <div className="relative" style={{ width: W, height: H, minWidth: W }}>
+            <div className="absolute top-3 right-3 z-10 flex flex-col rounded-lg border border-[#1f1f24] bg-[#0d0d10]/90 backdrop-blur shadow-[0_10px_30px_-12px_rgba(0,0,0,0.9)] overflow-hidden">
+              <button
+                onClick={zoomIn}
+                disabled={zoom >= ZOOM_MAX}
+                className="h-9 w-9 flex items-center justify-center text-[#c8c8d0] hover:text-white hover:bg-[#16161a] disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+                title="Zoom in"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </button>
+              <div className="h-px bg-[#16161a]" />
+              <button
+                onClick={zoomOut}
+                disabled={zoom <= ZOOM_MIN}
+                className="h-9 w-9 flex items-center justify-center text-[#c8c8d0] hover:text-white hover:bg-[#16161a] disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+                title="Zoom out"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </button>
+              <div className="h-px bg-[#16161a]" />
+              <button
+                onClick={zoomReset}
+                className="h-9 w-9 flex items-center justify-center text-[#c8c8d0] hover:text-white hover:bg-[#16161a] transition-colors"
+                title="Reset zoom"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="absolute bottom-3 right-3 z-10 px-2 py-1 rounded-md border border-[#1f1f24] bg-[#0d0d10]/90 backdrop-blur text-[10.5px] font-medium text-[#8a8a93]">
+              {Math.round(zoom * 100)}%
+            </div>
+
+            <div className="relative overflow-auto" style={{ height: H + 24 }}>
+              <div
+                className="relative origin-top-left transition-transform"
+                style={{
+                  width: W * zoom,
+                  height: H * zoom,
+                }}
+              >
+              <div className="relative origin-top-left" style={{ width: W, height: H, minWidth: W, transform: `scale(${zoom})`, transformOrigin: "top left" }}>
                 <svg className="absolute inset-0 pointer-events-none" width={W} height={H}>
                   <defs>
                     <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
@@ -199,6 +248,7 @@ export default function Lineage() {
                     </button>
                   );
                 })}
+              </div>
               </div>
             </div>
           </div>

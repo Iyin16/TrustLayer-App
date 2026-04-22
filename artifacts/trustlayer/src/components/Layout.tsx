@@ -32,23 +32,22 @@ export function PageHeader({
   return (
     <div className="relative">
       {ambient && (
-        <div className="pointer-events-none absolute -inset-x-8 -top-16 -bottom-8 -z-10 overflow-hidden">
-          <div className="absolute left-[-4%] top-0 h-[420px] w-[680px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,106,31,0.16),rgba(255,106,31,0.04)_40%,transparent_70%)] blur-2xl ember-drift" />
-          <div className="absolute right-[8%] -top-10 h-[360px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,138,74,0.10),transparent_65%)] blur-2xl" />
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[rgba(255,106,31,0.18)] to-transparent" />
+        <div className="pointer-events-none absolute -inset-x-8 -top-12 -bottom-6 -z-10 overflow-hidden">
+          <div className="absolute right-[-2%] -top-12 h-[300px] w-[480px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,77,46,0.08),transparent_70%)] blur-2xl" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[rgba(255,77,46,0.16)] to-transparent" />
         </div>
       )}
       <div className="flex items-end justify-between gap-6 flex-wrap">
         <div>
           <div className="text-[10.5px] font-semibold tracking-[0.22em] uppercase">
-            <span className="bg-gradient-to-r from-[#8a8a93] to-[#5a5a63] bg-clip-text text-transparent">{eyebrow}</span>
+            <span className="bg-gradient-to-r from-[#a1a1aa] to-[#5a5a63] bg-clip-text text-transparent">{eyebrow}</span>
           </div>
           <h1 className="mt-3 text-[36px] leading-[1.05] font-semibold tracking-[-0.02em] text-white">
             {title}
             {highlight && (
               <>
                 {" "}
-                <span className="bg-gradient-to-r from-[#ff8a4a] via-[#ff6a1f] to-[#ff5a0f] bg-clip-text text-transparent drop-shadow-[0_0_24px_rgba(255,106,31,0.35)]">
+                <span className="bg-gradient-to-r from-[#ff7a59] via-[#ff4d2e] to-[#ff3a1c] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(255,77,46,0.35)]">
                   {highlight}
                 </span>
               </>
@@ -72,7 +71,7 @@ export function EmberButton({
   return (
     <div className="relative">
       <span className="pointer-events-none absolute -inset-3 rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,106,31,0.45),transparent_65%)] blur-xl" />
-      <button className="relative h-10 px-4 rounded-lg bg-gradient-to-b from-[#ff7a35] to-[#ff5a0f] hover:from-[#ff8a4a] hover:to-[#ff6a1f] text-[13px] font-semibold text-white flex items-center gap-2 transition-all shadow-[0_10px_30px_-6px_rgba(255,106,31,0.55),0_0_0_1px_rgba(255,138,74,0.4)_inset,0_1px_0_0_rgba(255,255,255,0.25)_inset]">
+      <button className="relative h-10 px-4 rounded-lg bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] hover:from-[#ff7a59] hover:to-[#ff4d2e] text-[13px] font-semibold text-white flex items-center gap-2 transition-all shadow-[0_10px_30px_-6px_rgba(255,106,31,0.55),0_0_0_1px_rgba(255,138,74,0.4)_inset,0_1px_0_0_rgba(255,255,255,0.25)_inset]">
         {Icon && <Icon className="h-4 w-4" strokeWidth={2.75} />}
         {children}
       </button>

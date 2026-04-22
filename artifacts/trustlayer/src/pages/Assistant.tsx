@@ -90,10 +90,10 @@ function MetadataBlock({ m }: { m: MetadataCard }) {
         <TrustRing score={m.trust} size={40} />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Database className="h-3.5 w-3.5 text-[#ff8a4a]" />
+            <Database className="h-3.5 w-3.5 text-[#ff7a59]" />
             <span className="text-[12.5px] font-semibold text-white truncate">{m.name}</span>
           </div>
-          <div className="text-[11px] text-[#8a8a93] mt-0.5 truncate">{m.source} · {m.owner}</div>
+          <div className="text-[11px] text-[#a1a1aa] mt-0.5 truncate">{m.source} · {m.owner}</div>
         </div>
       </div>
     );
@@ -103,7 +103,7 @@ function MetadataBlock({ m }: { m: MetadataCard }) {
     return (
       <div className="rounded-xl border border-[#1f1f24] bg-[#0a0a0d] px-3.5 py-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
         <div className="flex items-center gap-2">
-          <GitBranch className="h-3.5 w-3.5 text-[#ff8a4a]" />
+          <GitBranch className="h-3.5 w-3.5 text-[#ff7a59]" />
           <span className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Lineage edge</span>
         </div>
         <div className="mt-2 flex items-center gap-2">
@@ -119,7 +119,7 @@ function MetadataBlock({ m }: { m: MetadataCard }) {
     <div className="rounded-xl border border-[#1f1f24] bg-[#0a0a0d] px-3.5 py-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
       <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">{m.label}</div>
       <div className="mt-1.5 text-[20px] font-semibold tracking-tight text-white leading-none">{m.value}</div>
-      <div className="mt-1.5 text-[11px] text-[#8a8a93]">{m.delta}</div>
+      <div className="mt-1.5 text-[11px] text-[#a1a1aa]">{m.delta}</div>
     </div>
   );
 }
@@ -128,7 +128,7 @@ function MessageBubble({ m }: { m: Message }) {
   if (m.role === "user") {
     return (
       <div className="flex gap-3 justify-end">
-        <div className="max-w-[78%] rounded-2xl px-4 py-3 text-[13.5px] leading-relaxed bg-gradient-to-b from-[#ff7a35] to-[#ff5a0f] text-white shadow-[0_8px_24px_-10px_rgba(255,106,31,0.6)]">
+        <div className="max-w-[78%] rounded-2xl px-4 py-3 text-[13.5px] leading-relaxed bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] text-white shadow-[0_8px_24px_-10px_rgba(255,106,31,0.6)]">
           {m.text}
         </div>
         <div className="h-8 w-8 shrink-0 rounded-lg bg-[#1f1f24] flex items-center justify-center">
@@ -140,7 +140,7 @@ function MessageBubble({ m }: { m: Message }) {
   return (
     <div className="flex gap-3">
       <div className="h-8 w-8 shrink-0 rounded-lg bg-[rgba(255,106,31,0.10)] ring-1 ring-[rgba(255,106,31,0.25)] flex items-center justify-center">
-        <Bot className="h-4 w-4 text-[#ff8a4a]" />
+        <Bot className="h-4 w-4 text-[#ff7a59]" />
       </div>
       <div className="max-w-[82%] space-y-3">
         <div className="rounded-2xl px-4 py-3 text-[13.5px] leading-relaxed bg-[#101014] border border-[#1f1f24] text-[#e0e0e7] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)]">
@@ -162,13 +162,13 @@ function EmptyState({ onPick }: { onPick: (q: string) => void }) {
       <div className="text-center">
         <div className="relative inline-flex">
           <span className="pointer-events-none absolute -inset-6 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,106,31,0.35),transparent_65%)] blur-xl" />
-          <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-b from-[#ff7a35] to-[#ff5a0f] flex items-center justify-center shadow-[0_12px_30px_-8px_rgba(255,106,31,0.6),inset_0_1px_0_0_rgba(255,255,255,0.25)]">
+          <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] flex items-center justify-center shadow-[0_12px_30px_-8px_rgba(255,106,31,0.6),inset_0_1px_0_0_rgba(255,255,255,0.25)]">
             <Sparkles className="h-6 w-6 text-white" strokeWidth={2.25} />
           </div>
         </div>
         <h2 className="mt-5 text-[26px] font-semibold tracking-[-0.02em] text-white">
           How can I help with your{" "}
-          <span className="bg-gradient-to-r from-[#ff8a4a] via-[#ff6a1f] to-[#ff5a0f] bg-clip-text text-transparent">data trust</span>
+          <span className="bg-gradient-to-r from-[#ff7a59] via-[#ff4d2e] to-[#ff3a1c] bg-clip-text text-transparent">data trust</span>
           ?
         </h2>
         <p className="mt-2 text-[13.5px] text-[#9a9aa3]">
@@ -183,7 +183,7 @@ function EmptyState({ onPick }: { onPick: (q: string) => void }) {
             <div key={g.title} className="rounded-xl border border-[#1f1f24] bg-gradient-to-b from-[#0e0e12] to-[#0a0a0d] p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
               <div className="flex items-center gap-2.5">
                 <div className="h-7 w-7 rounded-lg bg-[rgba(255,106,31,0.10)] ring-1 ring-[rgba(255,106,31,0.20)] flex items-center justify-center">
-                  <Icon className="h-3.5 w-3.5 text-[#ff8a4a]" />
+                  <Icon className="h-3.5 w-3.5 text-[#ff7a59]" />
                 </div>
                 <span className="text-[12.5px] font-semibold text-white">{g.title}</span>
               </div>
@@ -195,7 +195,7 @@ function EmptyState({ onPick }: { onPick: (q: string) => void }) {
                     className="group text-left px-3 py-2 rounded-lg text-[12.5px] text-[#c8c8d0] hover:text-white hover:bg-[#101014] transition-colors flex items-center justify-between gap-2"
                   >
                     <span>{s}</span>
-                    <ArrowUpRight className="h-3 w-3 text-[#5a5a63] group-hover:text-[#ff8a4a] shrink-0" />
+                    <ArrowUpRight className="h-3 w-3 text-[#5a5a63] group-hover:text-[#ff7a59] shrink-0" />
                   </button>
                 ))}
               </div>
@@ -260,7 +260,7 @@ export default function Assistant() {
           <Card className="p-4">
             <button
               onClick={reset}
-              className="w-full h-10 px-3 rounded-lg bg-gradient-to-b from-[#ff7a35] to-[#ff5a0f] hover:from-[#ff8a4a] hover:to-[#ff6a1f] text-[13px] font-semibold text-white flex items-center justify-center gap-2 transition-all shadow-[0_10px_24px_-6px_rgba(255,106,31,0.55),0_0_0_1px_rgba(255,138,74,0.4)_inset,0_1px_0_0_rgba(255,255,255,0.25)_inset]"
+              className="w-full h-10 px-3 rounded-lg bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] hover:from-[#ff7a59] hover:to-[#ff4d2e] text-[13px] font-semibold text-white flex items-center justify-center gap-2 transition-all shadow-[0_10px_24px_-6px_rgba(255,106,31,0.55),0_0_0_1px_rgba(255,138,74,0.4)_inset,0_1px_0_0_rgba(255,255,255,0.25)_inset]"
             >
               <Plus className="h-4 w-4" strokeWidth={2.75} /> New conversation
             </button>
@@ -274,9 +274,9 @@ export default function Assistant() {
                     t.active ? "bg-[#101014] border border-[#2a1f18]" : "hover:bg-[#101014] border border-transparent",
                   ].join(" ")}
                 >
-                  {t.active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-r bg-[#ff6a1f] shadow-[0_0_10px_rgba(255,106,31,0.7)]" />}
+                  {t.active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-r bg-[#ff4d2e] shadow-[0_0_10px_rgba(255,106,31,0.7)]" />}
                   <div className="flex items-center gap-2 text-[12.5px] font-medium text-white truncate">
-                    <MessageSquare className="h-3.5 w-3.5 text-[#8a8a93] shrink-0" />
+                    <MessageSquare className="h-3.5 w-3.5 text-[#a1a1aa] shrink-0" />
                     <span className="truncate">{t.title}</span>
                   </div>
                   <div className="mt-0.5 ml-5 flex items-center gap-1 text-[10.5px] text-[#5a5a63]">
@@ -303,7 +303,7 @@ export default function Assistant() {
             <div className="relative">
               <span className="pointer-events-none absolute -inset-1 rounded-2xl bg-[radial-gradient(circle_at_left,rgba(255,106,31,0.18),transparent_60%)] blur-xl" />
               <div className="relative flex items-end gap-2 rounded-xl bg-[#0d0d10] border border-[#1f1f24] focus-within:border-[#2a2a30] transition-colors p-2 pl-3.5">
-                <Sparkles className="h-4 w-4 mt-2 text-[#ff8a4a]" />
+                <Sparkles className="h-4 w-4 mt-2 text-[#ff7a59]" />
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -317,12 +317,12 @@ export default function Assistant() {
                   placeholder="Ask about a dataset, owner, or pipeline..."
                   className="flex-1 bg-transparent resize-none text-[13.5px] placeholder:text-[#5a5a63] text-white focus:outline-none py-2 max-h-32"
                 />
-                <button className="h-9 w-9 rounded-lg flex items-center justify-center text-[#8a8a93] hover:text-white hover:bg-[#101014] transition-colors">
+                <button className="h-9 w-9 rounded-lg flex items-center justify-center text-[#a1a1aa] hover:text-white hover:bg-[#101014] transition-colors">
                   <Paperclip className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => send(input)}
-                  className="h-9 w-9 rounded-lg bg-gradient-to-b from-[#ff7a35] to-[#ff5a0f] flex items-center justify-center text-white shadow-[0_6px_18px_-4px_rgba(255,106,31,0.6),0_0_0_1px_rgba(255,138,74,0.4)_inset]"
+                  className="h-9 w-9 rounded-lg bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] flex items-center justify-center text-white shadow-[0_6px_18px_-4px_rgba(255,106,31,0.6),0_0_0_1px_rgba(255,138,74,0.4)_inset]"
                 >
                   <Send className="h-3.5 w-3.5" />
                 </button>

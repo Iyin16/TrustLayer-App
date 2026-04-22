@@ -129,9 +129,9 @@ export default function Lineage() {
           <div className="px-6 pt-6 pb-4 flex items-end justify-between gap-4 flex-wrap border-b border-[#16161a]">
             <div>
               <h2 className="text-[18px] font-semibold tracking-tight">Mission control</h2>
-              <p className="mt-1 text-[12.5px] text-[#8a8a93]">12 sources · 8 transforms · 4 consumers</p>
+              <p className="mt-1 text-[12.5px] text-[#a1a1aa]">12 sources · 8 transforms · 4 consumers</p>
             </div>
-            <div className="flex items-center gap-3 text-[11px] text-[#8a8a93]">
+            <div className="flex items-center gap-3 text-[11px] text-[#a1a1aa]">
               <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#34d399] shadow-[0_0_6px_rgba(52,211,153,0.7)]" />Healthy</span>
               <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#fbbf24] shadow-[0_0_6px_rgba(251,191,36,0.7)]" />Warning</span>
               <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#f87171] shadow-[0_0_6px_rgba(248,113,113,0.7)]" />At risk</span>
@@ -177,7 +177,7 @@ export default function Lineage() {
                 <Maximize2 className="h-4 w-4" />
               </button>
             </div>
-            <div className="absolute bottom-3 right-3 z-10 px-2 py-1 rounded-md border border-[#1f1f24] bg-[#0d0d10]/90 backdrop-blur text-[10.5px] font-medium text-[#8a8a93]">
+            <div className="absolute bottom-3 right-3 z-10 px-2 py-1 rounded-md border border-[#1f1f24] bg-[#0d0d10]/90 backdrop-blur text-[10.5px] font-medium text-[#a1a1aa]">
               {Math.round(zoom * 100)}%
             </div>
 
@@ -211,7 +211,7 @@ export default function Lineage() {
                         key={i}
                         d={`M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`}
                         fill="none"
-                        stroke={isActive ? "#ff8a4a" : stroke}
+                        stroke={isActive ? "#ff7a59" : stroke}
                         strokeWidth={isActive ? 2 : 1.25}
                         strokeOpacity={isActive ? 0.95 : 0.6}
                         markerEnd="url(#arr)"
@@ -244,7 +244,7 @@ export default function Lineage() {
                         <span className={["h-1.5 w-1.5 rounded-full", h.dot].join(" ")} />
                       </div>
                       <div className="relative mt-1 text-[12.5px] font-semibold text-white truncate">{n.label}</div>
-                      <div className="relative text-[10.5px] text-[#8a8a93] truncate">{n.sub}</div>
+                      <div className="relative text-[10.5px] text-[#a1a1aa] truncate">{n.sub}</div>
                     </button>
                   );
                 })}
@@ -265,11 +265,11 @@ export default function Lineage() {
                 </span>
               </div>
               <h3 className="relative mt-2 text-[20px] font-semibold tracking-tight text-white">{selected.label}</h3>
-              <div className="relative mt-1 text-[12.5px] text-[#8a8a93]">{selected.sub}</div>
+              <div className="relative mt-1 text-[12.5px] text-[#a1a1aa]">{selected.sub}</div>
 
               {selected.trust !== undefined && (
                 <div className="relative mt-4 flex items-center gap-3 rounded-lg border border-[#1f1f24] bg-[#0d0d10] px-3.5 py-2.5">
-                  <Activity className="h-4 w-4 text-[#ff8a4a]" />
+                  <Activity className="h-4 w-4 text-[#ff7a59]" />
                   <div>
                     <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#5a5a63] font-semibold">Trust score</div>
                     <div className="text-[14px] font-semibold text-white">{selected.trust}/100</div>

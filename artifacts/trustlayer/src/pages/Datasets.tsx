@@ -37,7 +37,7 @@ function trustBadge(score: number) {
     score >= 85
       ? "bg-[rgba(52,211,153,0.10)] text-[#34d399] border-[rgba(52,211,153,0.25)]"
       : score >= 65
-      ? "bg-[rgba(255,106,31,0.10)] text-[#ff8a4a] border-[rgba(255,106,31,0.25)]"
+      ? "bg-[rgba(255,106,31,0.10)] text-[#ff7a59] border-[rgba(255,106,31,0.25)]"
       : "bg-[rgba(248,113,113,0.10)] text-[#f87171] border-[rgba(248,113,113,0.25)]";
   return (
     <span className={["inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold border", tone].join(" ")}>
@@ -80,11 +80,11 @@ function DetailPanel({ ds, onClose }: { ds: Dataset; onClose: () => void }) {
           <div>
             <div className="text-[10.5px] font-semibold tracking-[0.18em] uppercase text-[#5a5a63]">Dataset</div>
             <h3 className="mt-2 text-[20px] font-semibold tracking-tight text-white">{ds.name}</h3>
-            <div className="mt-1 text-[12.5px] text-[#8a8a93]">{ds.source} · {ds.domain}</div>
+            <div className="mt-1 text-[12.5px] text-[#a1a1aa]">{ds.source} · {ds.domain}</div>
           </div>
           <button
             onClick={onClose}
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-[#8a8a93] hover:text-white hover:bg-[#101014] transition-colors"
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-[#a1a1aa] hover:text-white hover:bg-[#101014] transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -199,7 +199,7 @@ export default function Datasets() {
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div>
                 <h2 className="text-[18px] font-semibold tracking-tight">All datasets</h2>
-                <p className="mt-1 text-[12.5px] text-[#8a8a93]">
+                <p className="mt-1 text-[12.5px] text-[#a1a1aa]">
                   Showing {filtered.length} of {datasets.length} · sorted by trust score
                 </p>
               </div>
@@ -250,10 +250,10 @@ export default function Datasets() {
             {filtered.length === 0 ? (
               <div className="px-6 py-16 text-center">
                 <div className="mx-auto h-12 w-12 rounded-xl bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center">
-                  <Search className="h-5 w-5 text-[#ff8a4a]" />
+                  <Search className="h-5 w-5 text-[#ff7a59]" />
                 </div>
                 <div className="mt-4 text-[14px] font-semibold text-white">No datasets match these filters</div>
-                <div className="mt-1 text-[12.5px] text-[#8a8a93]">Try clearing search or selecting "All".</div>
+                <div className="mt-1 text-[12.5px] text-[#a1a1aa]">Try clearing search or selecting "All".</div>
               </div>
             ) : (
               filtered.map((ds) => {
@@ -267,11 +267,11 @@ export default function Datasets() {
                       active ? "bg-[#101014]" : "hover:bg-[#101014]/60",
                     ].join(" ")}
                   >
-                    {active && <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r bg-[#ff6a1f] shadow-[0_0_10px_rgba(255,106,31,0.7)]" />}
+                    {active && <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r bg-[#ff4d2e] shadow-[0_0_10px_rgba(255,106,31,0.7)]" />}
                     <Link href={`/datasets/${ds.name}`} className="absolute inset-0 z-0" aria-label={`Open ${ds.name}`} />
                     <div className="relative pointer-events-none">
                       <div className="flex items-center gap-2">
-                        <span className="text-[13.5px] font-medium text-white group-hover:text-[#ff8a4a] transition-colors">{ds.name}</span>
+                        <span className="text-[13.5px] font-medium text-white group-hover:text-[#ff7a59] transition-colors">{ds.name}</span>
                         {trustBadge(ds.trust)}
                       </div>
                       <div className="text-[11.5px] text-[#5a5a63] mt-0.5">{ds.source} · {ds.domain}</div>
@@ -280,7 +280,7 @@ export default function Datasets() {
                       <div className="h-7 w-7 rounded-full bg-[#1f1f24] flex items-center justify-center text-[10.5px] font-semibold text-[#a8a8b3]">{ds.ownerInitials}</div>
                       <span className="text-[13px] text-[#d8d8de]">{ds.ownerName}</span>
                     </div>
-                    <div className="relative pointer-events-none text-[12.5px] text-[#8a8a93]">{ds.updated}</div>
+                    <div className="relative pointer-events-none text-[12.5px] text-[#a1a1aa]">{ds.updated}</div>
                     <div className="relative pointer-events-none"><TrustRing score={ds.trust} /></div>
                     <div className="relative pointer-events-none">
                       <span className={["inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium", statusPill(ds.status)].join(" ")}>
@@ -288,7 +288,7 @@ export default function Datasets() {
                         {ds.status}
                       </span>
                     </div>
-                    <ArrowUpRight className="relative pointer-events-none h-4 w-4 text-[#3a3a40] group-hover:text-[#ff8a4a] transition-colors ml-2" />
+                    <ArrowUpRight className="relative pointer-events-none h-4 w-4 text-[#3a3a40] group-hover:text-[#ff7a59] transition-colors ml-2" />
                   </div>
                 );
               })
@@ -302,10 +302,10 @@ export default function Datasets() {
           ) : (
             <Card className="p-8 text-center">
               <div className="mx-auto h-12 w-12 rounded-xl bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center">
-                <Database className="h-5 w-5 text-[#ff8a4a]" />
+                <Database className="h-5 w-5 text-[#ff7a59]" />
               </div>
               <div className="mt-4 text-[14px] font-semibold text-white">Select a dataset</div>
-              <div className="mt-1 text-[12.5px] text-[#8a8a93]">Click any row to inspect ownership, checks, and lineage.</div>
+              <div className="mt-1 text-[12.5px] text-[#a1a1aa]">Click any row to inspect ownership, checks, and lineage.</div>
             </Card>
           )}
         </div>

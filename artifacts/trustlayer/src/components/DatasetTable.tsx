@@ -19,7 +19,7 @@ export function DatasetTable({
       <div className="px-6 pt-6 pb-5 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-[18px] font-semibold tracking-tight">{title}</h2>
-          <p className="mt-1 text-[12.5px] text-[#8a8a93]">
+          <p className="mt-1 text-[12.5px] text-[#a1a1aa]">
             {subtitle ?? `${rows.length} datasets · sorted by trust score`}
           </p>
         </div>
@@ -64,7 +64,7 @@ export function DatasetTable({
                 </div>
                 <span className="text-[13px] text-[#d8d8de]">{ds.ownerName}</span>
               </div>
-              <div className="text-[12.5px] text-[#8a8a93]">{ds.updated}</div>
+              <div className="text-[12.5px] text-[#a1a1aa]">{ds.updated}</div>
               <div>
                 <TrustRing score={ds.trust} />
               </div>

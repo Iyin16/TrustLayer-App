@@ -21,13 +21,13 @@ import { TrustRing } from "../components/TrustRing";
 import { datasets, statusPill } from "../lib/data";
 
 function trustTier(trust: number) {
-  if (trust >= 85) return { label: "High Trust", tone: "bg-[rgba(255,106,31,0.10)] text-[#ff8a4a] border-[rgba(255,106,31,0.30)]" };
+  if (trust >= 85) return { label: "High Trust", tone: "bg-[rgba(255,106,31,0.10)] text-[#ff7a59] border-[rgba(255,106,31,0.30)]" };
   if (trust >= 65) return { label: "Moderate Trust", tone: "bg-[rgba(251,191,36,0.10)] text-[#fbbf24] border-[rgba(251,191,36,0.25)]" };
   return { label: "Low Trust", tone: "bg-[rgba(248,113,113,0.10)] text-[#f87171] border-[rgba(248,113,113,0.25)]" };
 }
 
 function pillarBar(value: number) {
-  const color = value >= 85 ? "from-[#34d399] to-[#22c55e]" : value >= 65 ? "from-[#ff7a35] to-[#ff5a0f]" : "from-[#f87171] to-[#ef4444]";
+  const color = value >= 85 ? "from-[#34d399] to-[#22c55e]" : value >= 65 ? "from-[#ff5a35] to-[#ff3a1c]" : "from-[#f87171] to-[#ef4444]";
   const glow = value >= 85 ? "rgba(52,211,153,0.5)" : value >= 65 ? "rgba(255,106,31,0.55)" : "rgba(248,113,113,0.5)";
   return (
     <div className="relative h-1.5 w-full rounded-full bg-[#16161a] overflow-hidden">
@@ -50,21 +50,21 @@ function PillarCard({
   value: number;
   hint: string;
 }) {
-  const valueColor = value >= 85 ? "text-[#34d399]" : value >= 65 ? "text-[#ff8a4a]" : "text-[#f87171]";
+  const valueColor = value >= 85 ? "text-[#34d399]" : value >= 65 ? "text-[#ff7a59]" : "text-[#f87171]";
   return (
     <div className="relative rounded-2xl border border-[#1f1f24] bg-gradient-to-b from-[#121215] to-[#0a0a0d] p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_24px_48px_-24px_rgba(0,0,0,0.8)] overflow-hidden">
       <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="h-8 w-8 rounded-lg bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center">
-            <Icon className="h-4 w-4 text-[#ff8a4a]" />
+            <Icon className="h-4 w-4 text-[#ff7a59]" />
           </div>
           <span className="text-[13.5px] font-semibold text-white">{label}</span>
         </div>
         <span className={["text-[22px] font-semibold tracking-tight tabular-nums", valueColor].join(" ")}>{value}</span>
       </div>
       <div className="mt-4">{pillarBar(value)}</div>
-      <div className="mt-3 text-[11.5px] text-[#8a8a93]">{hint}</div>
+      <div className="mt-3 text-[11.5px] text-[#a1a1aa]">{hint}</div>
     </div>
   );
 }
@@ -80,7 +80,7 @@ export default function DatasetDetail() {
 
   return (
     <>
-      <div className="text-[12px] text-[#8a8a93] flex items-center gap-1.5">
+      <div className="text-[12px] text-[#a1a1aa] flex items-center gap-1.5">
         <Link href="/datasets" className="hover:text-white transition-colors">Datasets</Link>
         <ChevronRight className="h-3 w-3 text-[#3a3a40]" />
         <span className="text-[#d8d8de]">{ds.name}</span>
@@ -108,27 +108,27 @@ export default function DatasetDetail() {
               </span>
               <span className="text-[#3a3a40]">·</span>
               <div className="flex items-center gap-1.5 text-[12.5px] text-[#d8d8de]">
-                <Database className="h-3.5 w-3.5 text-[#8a8a93]" />
+                <Database className="h-3.5 w-3.5 text-[#a1a1aa]" />
                 {ds.source} · {ds.domain}
               </div>
               <span className="text-[#3a3a40]">·</span>
               <div className="flex items-center gap-1.5 text-[12.5px] text-[#d8d8de]">
-                <Layers className="h-3.5 w-3.5 text-[#8a8a93]" />
+                <Layers className="h-3.5 w-3.5 text-[#a1a1aa]" />
                 {ds.rows}
               </div>
               <span className="text-[#3a3a40]">·</span>
               <div className="flex items-center gap-1.5 text-[12.5px] text-[#d8d8de]">
-                <HardDrive className="h-3.5 w-3.5 text-[#8a8a93]" />
+                <HardDrive className="h-3.5 w-3.5 text-[#a1a1aa]" />
                 {ds.size}
               </div>
               <span className="text-[#3a3a40]">·</span>
               <div className="flex items-center gap-1.5 text-[12.5px] text-[#d8d8de]">
-                <Clock className="h-3.5 w-3.5 text-[#8a8a93]" />
+                <Clock className="h-3.5 w-3.5 text-[#a1a1aa]" />
                 Updated {ds.updated}
               </div>
               <span className="text-[#3a3a40]">·</span>
               <div className="flex items-center gap-1.5 text-[12.5px] text-[#d8d8de]">
-                <User className="h-3.5 w-3.5 text-[#8a8a93]" />
+                <User className="h-3.5 w-3.5 text-[#a1a1aa]" />
                 Owner · {ds.ownerName}
               </div>
             </div>
@@ -136,7 +136,7 @@ export default function DatasetDetail() {
 
           <div>
             <h2 className="text-[18px] font-semibold tracking-tight text-white">Score breakdown</h2>
-            <p className="mt-1 text-[12.5px] text-[#8a8a93]">Four pillars contribute to the overall trust score.</p>
+            <p className="mt-1 text-[12.5px] text-[#a1a1aa]">Four pillars contribute to the overall trust score.</p>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <PillarCard icon={Clock} label="Freshness" value={ds.pillars.freshness} hint="Time since last successful refresh" />
               <PillarCard icon={Users} label="Ownership" value={ds.pillars.ownership} hint="Assigned data steward & on-call" />
@@ -147,7 +147,7 @@ export default function DatasetDetail() {
 
           <div>
             <h2 className="text-[18px] font-semibold tracking-tight text-white">Recent checks</h2>
-            <p className="mt-1 text-[12.5px] text-[#8a8a93]">Latest validations across the pipeline.</p>
+            <p className="mt-1 text-[12.5px] text-[#a1a1aa]">Latest validations across the pipeline.</p>
             <Card className="mt-4 divide-y divide-[#101014]">
               {[
                 { label: "Schema integrity", ok: !schemaRisk, sub: schemaRisk ? "1 column dropped upstream" : "All columns match contract" },
@@ -158,7 +158,7 @@ export default function DatasetDetail() {
                 <div key={c.label} className="flex items-center justify-between px-5 py-3.5">
                   <div>
                     <div className="text-[13px] font-medium text-white">{c.label}</div>
-                    <div className="mt-0.5 text-[11.5px] text-[#8a8a93]">{c.sub}</div>
+                    <div className="mt-0.5 text-[11.5px] text-[#a1a1aa]">{c.sub}</div>
                   </div>
                   {c.ok ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[rgba(52,211,153,0.10)] text-[#34d399] border border-[rgba(52,211,153,0.25)]">
@@ -187,7 +187,7 @@ export default function DatasetDetail() {
                 <span className={["inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border", tier.tone].join(" ")}>
                   {tier.label}
                 </span>
-                <div className="mt-2 text-[12px] text-[#8a8a93]">out of 100</div>
+                <div className="mt-2 text-[12px] text-[#a1a1aa]">out of 100</div>
                 <div className="mt-1 text-[11.5px] text-[#5a5a63]">Recalculated 2 min ago</div>
               </div>
             </div>
@@ -195,11 +195,11 @@ export default function DatasetDetail() {
 
           <div>
             <h2 className="text-[18px] font-semibold tracking-tight text-white">Why this score?</h2>
-            <p className="mt-1 text-[12.5px] text-[#8a8a93]">Auto-generated from signals across your stack.</p>
+            <p className="mt-1 text-[12.5px] text-[#a1a1aa]">Auto-generated from signals across your stack.</p>
 
             <Card className="mt-4 p-5">
               <div className="flex items-center gap-2 text-[12.5px] font-semibold text-white">
-                <Sparkles className="h-4 w-4 text-[#ff8a4a]" />
+                <Sparkles className="h-4 w-4 text-[#ff7a59]" />
                 TrustLayer AI explanation
               </div>
               <div className="mt-4 space-y-2.5">

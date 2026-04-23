@@ -64,14 +64,18 @@ export function PageHeader({
 export function EmberButton({
   children,
   icon: Icon,
+  onClick,
+  type = "button",
 }: {
   children: ReactNode;
   icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  onClick?: () => void;
+  type?: "button" | "submit";
 }) {
   return (
     <div className="relative">
       <span className="pointer-events-none absolute -inset-3 rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,106,31,0.45),transparent_65%)] blur-xl" />
-      <button className="relative h-10 px-4 rounded-lg bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] hover:from-[#ff7a59] hover:to-[#ff4d2e] text-[13px] font-semibold text-white flex items-center gap-2 transition-all shadow-[0_10px_30px_-6px_rgba(255,106,31,0.55),0_0_0_1px_rgba(255,138,74,0.4)_inset,0_1px_0_0_rgba(255,255,255,0.25)_inset]">
+      <button type={type} onClick={onClick} className="relative h-10 px-4 rounded-lg bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] hover:from-[#ff7a59] hover:to-[#ff4d2e] text-[13px] font-semibold text-white flex items-center gap-2 transition-all shadow-[0_10px_30px_-6px_rgba(255,106,31,0.55),0_0_0_1px_rgba(255,138,74,0.4)_inset,0_1px_0_0_rgba(255,255,255,0.25)_inset]">
         {Icon && <Icon className="h-4 w-4" strokeWidth={2.75} />}
         {children}
       </button>
@@ -82,12 +86,16 @@ export function EmberButton({
 export function GhostButton({
   children,
   icon: Icon,
+  onClick,
+  type = "button",
 }: {
   children: ReactNode;
   icon?: React.ComponentType<{ className?: string }>;
+  onClick?: () => void;
+  type?: "button" | "submit";
 }) {
   return (
-    <button className="h-10 px-4 rounded-lg border border-[#2a2a30] bg-[#0d0d10]/80 backdrop-blur hover:bg-[#16161a] hover:border-[#3a3a40] text-[13px] font-medium text-white flex items-center gap-2 transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+    <button type={type} onClick={onClick} className="h-10 px-4 rounded-lg border border-[#2a2a30] bg-[#0d0d10]/80 backdrop-blur hover:bg-[#16161a] hover:border-[#3a3a40] text-[13px] font-medium text-white flex items-center gap-2 transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
       {Icon && <Icon className="h-4 w-4" />}
       {children}
     </button>

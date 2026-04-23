@@ -30,3 +30,9 @@ externalPort = 80
 [[ports]]
 localPort = 20124
 externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+NEXT_PUBLIC_APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"
+NEXT_PUBLIC_APPWRITE_PROJECT_ID = "69cea3c6001b7b61a722"

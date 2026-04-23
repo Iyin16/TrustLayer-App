@@ -1,6 +1,25 @@
-import { Search, Bell, Settings } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search, Bell, Settings, LogOut } from "lucide-react";
+import { useAuth, userInitials } from "../lib/auth";
 
 export function Header() {
+  const { user, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const name = user?.name || user?.email || "Account";
+  const email = user?.email || "";
+  const initials = userInitials(user?.name || user?.email);
+
   return (
     <header className="h-16 border-b border-[#16161a] bg-[#08080a]/80 backdrop-blur-xl sticky top-0 z-10">
       <div className="h-full px-8 flex items-center gap-6">
@@ -27,14 +46,42 @@ export function Header() {
             <Settings className="h-[17px] w-[17px]" />
           </button>
 
-          <div className="ml-2 flex items-center gap-3 pl-3 pr-3.5 py-1.5 rounded-xl border border-[#1f1f24] bg-[#0d0d10] hover:bg-[#101014] transition-colors cursor-pointer">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#ff4d2e] to-[#a8260f] flex items-center justify-center text-[11px] font-semibold text-white">
-              AC
-            </div>
-            <div className="leading-tight">
-              <div className="text-[12.5px] font-semibold text-white">Alex Carter</div>
-              <div className="text-[10.5px] text-[#5a5a63]">Acme Corp</div>
-            </div>
+          <div ref={menuRef} className="relative ml-2">
+            <button
+              onClick={() => setOpen((v) => !v)}
+              className="flex items-center gap-3 pl-3 pr-3.5 py-1.5 rounded-xl border border-[#1f1f24] bg-[#0d0d10] hover:bg-[#101014] transition-colors"
+            >
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#ff4d2e] to-[#a8260f] flex items-center justify-center text-[11px] font-semibold text-white">
+                {initials}
+              </div>
+              <div className="leading-tight text-left">
+                <div className="text-[12.5px] font-semibold text-white max-w-[140px] truncate">
+                  {name}
+                </div>
+                <div className="text-[10.5px] text-[#5a5a63] max-w-[140px] truncate">
+                  {email || "Signed in"}
+                </div>
+              </div>
+            </button>
+
+            {open && (
+              <div className="absolute right-0 top-[calc(100%+6px)] w-[220px] rounded-xl border border-[#1f1f24] bg-[#0d0d10] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
+                <div className="px-3.5 py-3 border-b border-[#16161a]">
+                  <div className="text-[12.5px] font-semibold text-white truncate">{name}</div>
+                  <div className="text-[11px] text-[#5a5a63] truncate">{email}</div>
+                </div>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    logout();
+                  }}
+                  className="w-full px-3.5 py-2.5 flex items-center gap-2.5 text-[12.5px] text-[#a1a1aa] hover:bg-[#101014] hover:text-white transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

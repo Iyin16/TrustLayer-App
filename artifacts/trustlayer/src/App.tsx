@@ -6,8 +6,25 @@ import DatasetDetail from "./pages/DatasetDetail";
 import Lineage from "./pages/Lineage";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import { useAuth } from "./lib/auth";
+import { Loader2 } from "lucide-react";
 
 export default function App() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-5 w-5 text-[#ff4d2e] animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
   return (
     <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <Layout>

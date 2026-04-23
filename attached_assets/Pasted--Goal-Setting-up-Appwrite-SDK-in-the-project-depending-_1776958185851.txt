@@ -1,0 +1,54 @@
+
+Goal: Setting up Appwrite SDK in the project depending on if a project already exists or not.
+
+Following are the project details:
+
+```
+APPWRITE_PROJECT_ID = "69cea3c6001b7b61a722"
+APPWRITE_PROJECT_NAME = "auth-test"
+APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"
+```
+
+Follow the steps depending on if a project already exists on user's working directory or not:
+
+## If a project already exists:
+
+Install the Appwrite web SDK using the following command. Respect the user's package manager of choice. Do not use NPM if the user uses Bun for example.
+
+```bash
+npm install appwrite
+```
+        
+Create a new `appwrite.js` (or equivalent, respecting the framework and language, don't create a JS file if TS is being used in the project) file in a suitable lib directory and have the following code:
+
+```js
+import { Client, Account, Databases } from "appwrite";
+
+const client = new Client()
+    .setEndpoint("https://fra.cloud.appwrite.io/v1")
+    .setProject("69cea3c6001b7b61a722");
+
+const account = new Account(client);
+const databases = new Databases(client);
+
+export { client, account, databases };
+```
+
+When the app is opened, make it so that the following function is automatically called which will ping the Appwrite backend server to verify the setup. Let the user know about this function being added
+
+```js
+client.ping();
+```
+
+
+## If a project does not exist:
+
+1. Clone the starter kit using the terminal or VSCode. Make sure to clone in the current working directory so that the cloned files are directly available in the working directory.
+
+```bash
+git clone https://github.com/appwrite/starter-for-nextjs
+cd starter-for-nextjs .
+```
+
+2. Replace all occurrences of the environment variables described in the project details section with their corresponding values. This effectively hardcodes the project details wherever those environment variables are used. Use grep (or an equivalent search) to find and update all occurrences.
+3. Install project dependencies using `npm install`, then run the app using `npm run dev`. Demo app runs on http://localhost:3000. Click the `Send a ping` button to verify the setup.

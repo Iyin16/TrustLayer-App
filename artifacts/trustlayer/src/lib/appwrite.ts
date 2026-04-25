@@ -1,4 +1,13 @@
-import { Client, Account, Databases, ID, Permission, Role, Query } from "appwrite";
+import {
+  Client,
+  Account,
+  Databases,
+  ID,
+  Permission,
+  Role,
+  Query,
+  OAuthProvider,
+} from "appwrite";
 
 const endpoint = import.meta.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string;
 const projectId = import.meta.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string;
@@ -24,6 +33,7 @@ export {
   Permission,
   Role,
   Query,
+  OAuthProvider,
   databaseId,
   datasetsCollectionId,
 };

@@ -10,7 +10,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
-import { account } from "../lib/appwrite";
+import { account, OAuthProvider } from "../lib/appwrite";
 
 type Mode = "login" | "signup" | "forgot" | "reset";
 
@@ -34,6 +34,15 @@ export default function Login() {
       setRecoveryUserId(userId);
       setRecoverySecret(secret);
       setMode("reset");
+      return;
+    }
+    if (params.get("oauth") === "failed") {
+      setError(
+        "Google sign-in didn't complete. Make sure Google OAuth is enabled for this Appwrite project.",
+      );
+      const url = new URL(window.location.href);
+      url.searchParams.delete("oauth");
+      window.history.replaceState({}, "", url.toString());
     }
   }, []);
 
@@ -42,6 +51,15 @@ export default function Login() {
     setInfo(null);
     setPassword("");
     setMode(next);
+  }
+
+  function signInWithGoogle() {
+    setError(null);
+    setInfo(null);
+    const base = `${window.location.origin}${import.meta.env.BASE_URL}`;
+    const successUrl = base;
+    const failureUrl = `${base}?oauth=failed`;
+    account.createOAuth2Session(OAuthProvider.Google, successUrl, failureUrl);
   }
 
   async function submit(e: React.FormEvent) {
@@ -135,7 +153,27 @@ export default function Login() {
           </h1>
           <p className="mt-1.5 text-[13px] text-[#a1a1aa]">{copy.sub}</p>
 
-          <form onSubmit={submit} className="mt-6 space-y-3.5">
+          {(mode === "login" || mode === "signup") && (
+            <>
+              <button
+                type="button"
+                onClick={signInWithGoogle}
+                className="mt-6 w-full h-11 rounded-xl bg-white text-[#0a0a0d] text-[13.5px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] hover:bg-[#f4f4f5] active:bg-[#e4e4e7] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <GoogleIcon className="h-4.5 w-4.5" />
+                Continue with Google
+              </button>
+              <div className="mt-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-[#1f1f24]" />
+                <div className="text-[10.5px] font-semibold tracking-[0.18em] uppercase text-[#5a5a63]">
+                  or
+                </div>
+                <div className="h-px flex-1 bg-[#1f1f24]" />
+              </div>
+            </>
+          )}
+
+          <form onSubmit={submit} className="mt-5 space-y-3.5">
             {mode === "signup" && (
               <Field icon={UserIcon} label="Name">
                 <input
@@ -270,6 +308,34 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="#4285F4"
+        d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.45c-.28 1.45-1.12 2.68-2.39 3.51v2.92h3.86c2.26-2.08 3.57-5.16 3.57-8.67z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.86-2.92c-1.07.72-2.44 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.11C3.26 21.31 7.31 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.27 14.37A7.21 7.21 0 014.89 12c0-.82.14-1.62.38-2.37V6.52H1.29A11.99 11.99 0 000 12c0 1.94.46 3.78 1.29 5.48l3.98-3.11z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.77c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.29 6.52l3.98 3.11C6.22 6.88 8.87 4.77 12 4.77z"
+      />
+    </svg>
   );
 }
 

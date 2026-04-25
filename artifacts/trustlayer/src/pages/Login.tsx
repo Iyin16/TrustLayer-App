@@ -95,8 +95,17 @@ export default function Login() {
         setMode("login");
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      setError(msg);
+      const raw = err instanceof Error ? err.message : "Something went wrong.";
+      const isNetwork =
+        /failed to fetch|network|cors|load failed/i.test(raw) ||
+        (err instanceof TypeError && raw.toLowerCase().includes("fetch"));
+      if (isNetwork) {
+        setError(
+          `Couldn't reach Appwrite from this browser. Open your Appwrite project → Settings → Platforms, add a Web platform, and set the hostname to "${window.location.hostname}" (no protocol, no port).`,
+        );
+      } else {
+        setError(raw);
+      }
     } finally {
       setBusy(false);
     }

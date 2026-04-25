@@ -10,16 +10,18 @@ import {
 import type { Models } from "appwrite";
 import { statusFor, type Dataset } from "./data";
 
-export type StatusKey = "healthy" | "warning" | "atrisk";
+export type DatasetStatus = "Healthy" | "Warning" | "At Risk";
 
 export type DatasetDoc = Models.Document & {
   name: string;
+  owner: string;
+  trust_score: number;
+  status: DatasetStatus;
+  user_id: string;
   source: string;
-  domain: string;
-  ownerName: string;
-  ownerId: string;
-  trustScore: number;
-  status: StatusKey;
+  last_updated: string;
+  description: string;
+  issue_reason: string;
 };
 
 function ensureConfigured() {
@@ -30,16 +32,15 @@ function ensureConfigured() {
   }
 }
 
-function statusKeyFor(score: number): StatusKey {
-  if (score >= 80) return "healthy";
-  if (score >= 60) return "warning";
-  return "atrisk";
+export function statusForScore(score: number): DatasetStatus {
+  if (score >= 80) return "Healthy";
+  if (score >= 60) return "Warning";
+  return "At Risk";
 }
 
-export function generateTrustScore(): number {
-  // Skew slightly toward usable scores so a fresh dataset feels meaningful.
-  const base = 35 + Math.floor(Math.random() * 61); // 35..95
-  return base;
+export function clampScore(n: number): number {
+  if (Number.isNaN(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
 }
 
 function initialsFor(name: string): string {
@@ -51,6 +52,7 @@ function initialsFor(name: string): string {
 
 function relativeTime(iso: string): { label: string; minutes: number } {
   const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return { label: "Just now", minutes: 0 };
   const now = Date.now();
   const minutes = Math.max(0, Math.round((now - then) / 60000));
   if (minutes < 1) return { label: "Just now", minutes: 0 };
@@ -62,22 +64,26 @@ function relativeTime(iso: string): { label: string; minutes: number } {
 }
 
 export function docToDataset(doc: DatasetDoc): Dataset {
-  const trust = doc.trustScore;
-  const updated = relativeTime(doc.$updatedAt);
+  const trust = clampScore(Number(doc.trust_score) || 0);
+  const lastUpdatedIso = doc.last_updated || doc.$updatedAt;
+  const updated = relativeTime(lastUpdatedIso);
   const passRatio = Math.max(0.2, trust / 100);
   const totalTests = 12;
   const passed = Math.round(totalTests * passRatio);
+  const description =
+    doc.description?.trim() ||
+    `${doc.name} dataset from ${doc.source}, owned by ${doc.owner}.`;
   return {
     name: doc.name,
     source: doc.source,
-    domain: doc.domain,
-    ownerName: doc.ownerName,
-    ownerInitials: initialsFor(doc.ownerName),
+    domain: "",
+    ownerName: doc.owner,
+    ownerInitials: initialsFor(doc.owner),
     updated: updated.label,
     updatedMinutes: updated.minutes,
     trust,
     status: statusFor(trust),
-    description: `${doc.name} dataset from ${doc.source}, owned by ${doc.ownerName}.`,
+    description,
     rows: "—",
     size: "—",
     pillars: {
@@ -100,71 +106,69 @@ export async function listMyDatasets(userId: string): Promise<DatasetDoc[]> {
   const res = await databases.listDocuments<DatasetDoc>(
     databaseId,
     datasetsCollectionId,
-    [Query.equal("ownerId", userId), Query.orderDesc("$updatedAt"), Query.limit(100)],
+    [Query.equal("user_id", userId), Query.orderDesc("last_updated"), Query.limit(100)],
   );
   return res.documents;
 }
 
-export type CreateDatasetInput = {
+export type DatasetInput = {
   name: string;
+  owner: string;
   source: string;
-  domain: string;
-  ownerName: string;
-  ownerId: string;
+  trust_score: number;
+  description: string;
+  issue_reason: string;
 };
 
-export async function createDataset(input: CreateDatasetInput): Promise<DatasetDoc> {
+export async function createDataset(
+  input: DatasetInput,
+  userId: string,
+): Promise<DatasetDoc> {
   ensureConfigured();
-  const trustScore = generateTrustScore();
+  const trust = clampScore(input.trust_score);
+  const now = new Date().toISOString();
   const doc = await databases.createDocument<DatasetDoc>(
     databaseId,
     datasetsCollectionId,
     ID.unique(),
     {
       name: input.name,
+      owner: input.owner,
       source: input.source,
-      domain: input.domain,
-      ownerName: input.ownerName,
-      ownerId: input.ownerId,
-      trustScore,
-      status: statusKeyFor(trustScore),
+      trust_score: trust,
+      status: statusForScore(trust),
+      user_id: userId,
+      last_updated: now,
+      description: input.description,
+      issue_reason: input.issue_reason,
     },
     [
-      Permission.read(Role.user(input.ownerId)),
-      Permission.update(Role.user(input.ownerId)),
-      Permission.delete(Role.user(input.ownerId)),
+      Permission.read(Role.user(userId)),
+      Permission.update(Role.user(userId)),
+      Permission.delete(Role.user(userId)),
     ],
   );
   return doc;
 }
 
-export type UpdateDatasetInput = Partial<{
-  name: string;
-  ownerName: string;
-  source: string;
-  domain: string;
-  trustScore: number;
-}>;
-
 export async function updateDataset(
   documentId: string,
-  patch: UpdateDatasetInput,
+  patch: Partial<DatasetInput>,
 ): Promise<DatasetDoc> {
   ensureConfigured();
   const data: Record<string, unknown> = { ...patch };
-  if (typeof patch.trustScore === "number") {
-    data.status = statusKeyFor(patch.trustScore);
+  if (typeof patch.trust_score === "number") {
+    const trust = clampScore(patch.trust_score);
+    data.trust_score = trust;
+    data.status = statusForScore(trust);
   }
+  data.last_updated = new Date().toISOString();
   return databases.updateDocument<DatasetDoc>(
     databaseId,
     datasetsCollectionId,
     documentId,
     data,
   );
-}
-
-export async function regenerateTrustScore(documentId: string): Promise<DatasetDoc> {
-  return updateDataset(documentId, { trustScore: generateTrustScore() });
 }
 
 export async function deleteDataset(documentId: string): Promise<void> {

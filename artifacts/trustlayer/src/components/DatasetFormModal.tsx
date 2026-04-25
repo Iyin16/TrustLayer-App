@@ -1,20 +1,22 @@
 import { useEffect, useState } from "react";
-import { X, Database, Loader2, Sparkles } from "lucide-react";
+import { X, Database, Loader2 } from "lucide-react";
 
 const SOURCES = ["Snowflake", "BigQuery", "Postgres", "Redshift", "Databricks"] as const;
 
 export type DatasetFormValues = {
   name: string;
+  owner: string;
   source: string;
-  domain: string;
-  ownerName: string;
+  trust_score: number;
+  description: string;
+  issue_reason: string;
 };
 
 export type DatasetFormModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initial?: Partial<DatasetFormValues>;
-  defaultOwnerName?: string;
+  defaultOwner?: string;
   onClose: () => void;
   onSubmit: (values: DatasetFormValues) => Promise<void>;
 };
@@ -23,14 +25,16 @@ export function DatasetFormModal({
   open,
   mode,
   initial,
-  defaultOwnerName,
+  defaultOwner,
   onClose,
   onSubmit,
 }: DatasetFormModalProps) {
   const [name, setName] = useState("");
   const [source, setSource] = useState<string>(SOURCES[0]);
-  const [domain, setDomain] = useState("");
-  const [ownerName, setOwnerName] = useState("");
+  const [owner, setOwner] = useState("");
+  const [trustScore, setTrustScore] = useState<number>(75);
+  const [description, setDescription] = useState("");
+  const [issueReason, setIssueReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -40,9 +44,13 @@ export function DatasetFormModal({
     setBusy(false);
     setName(initial?.name ?? "");
     setSource(initial?.source ?? SOURCES[0]);
-    setDomain(initial?.domain ?? "");
-    setOwnerName(initial?.ownerName ?? defaultOwnerName ?? "");
-  }, [open, initial, defaultOwnerName]);
+    setOwner(initial?.owner ?? defaultOwner ?? "");
+    setTrustScore(
+      typeof initial?.trust_score === "number" ? initial.trust_score : 75,
+    );
+    setDescription(initial?.description ?? "");
+    setIssueReason(initial?.issue_reason ?? "");
+  }, [open, initial, defaultOwner]);
 
   useEffect(() => {
     if (!open) return;
@@ -55,25 +63,37 @@ export function DatasetFormModal({
 
   if (!open) return null;
 
+  const previewStatus =
+    trustScore >= 80 ? "Healthy" : trustScore >= 60 ? "Warning" : "At Risk";
+  const previewColor =
+    previewStatus === "Healthy"
+      ? "text-[#34d399] bg-[rgba(52,211,153,0.10)] border-[rgba(52,211,153,0.28)]"
+      : previewStatus === "Warning"
+        ? "text-[#fbbf24] bg-[rgba(251,191,36,0.10)] border-[rgba(251,191,36,0.28)]"
+        : "text-[#f87171] bg-[rgba(248,113,113,0.10)] border-[rgba(248,113,113,0.28)]";
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const cleanName = name.trim();
-    const cleanDomain = domain.trim();
-    const cleanOwner = ownerName.trim();
+    const cleanOwner = owner.trim();
+    const cleanDescription = description.trim();
+    const cleanIssue = issueReason.trim();
     if (!cleanName) return setError("Dataset name is required.");
     if (!/^[a-z0-9_]+$/i.test(cleanName.replace(/\s+/g, "_"))) {
       return setError("Dataset name should contain only letters, numbers, and underscores.");
     }
-    if (!cleanDomain) return setError("Domain is required.");
-    if (!cleanOwner) return setError("Owner name is required.");
+    if (!cleanOwner) return setError("Owner is required.");
+    if (!cleanDescription) return setError("Description is required.");
     setBusy(true);
     try {
       await onSubmit({
         name: cleanName.replace(/\s+/g, "_"),
+        owner: cleanOwner,
         source,
-        domain: cleanDomain,
-        ownerName: cleanOwner,
+        trust_score: Math.max(0, Math.min(100, Math.round(trustScore))),
+        description: cleanDescription,
+        issue_reason: cleanIssue,
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Couldn't save dataset.";
@@ -93,7 +113,7 @@ export function DatasetFormModal({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative w-full max-w-[460px] rounded-2xl border border-[#1f1f24] bg-gradient-to-b from-[#121215] to-[#0a0a0d] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.8)] overflow-hidden"
+        className="relative w-full max-w-[460px] max-h-[90vh] overflow-y-auto rounded-2xl border border-[#1f1f24] bg-gradient-to-b from-[#121215] to-[#0a0a0d] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.8)]"
       >
         <span className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,77,46,0.18),transparent_65%)] blur-2xl" />
 
@@ -146,38 +166,68 @@ export function DatasetFormModal({
                 ))}
               </select>
             </Field>
-            <Field label="Domain">
+            <Field label="Owner">
               <input
                 type="text"
                 required
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder="growth"
+                value={owner}
+                onChange={(e) => setOwner(e.target.value)}
+                placeholder="Alex Carter"
                 className="w-full bg-transparent outline-none text-[13.5px] text-white placeholder:text-[#5a5a63]"
               />
             </Field>
           </div>
 
-          <Field label="Owner">
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="text-[10.5px] font-semibold tracking-[0.14em] uppercase text-[#5a5a63]">
+                Trust score
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-semibold text-white tabular-nums w-8 text-right">
+                  {trustScore}
+                </span>
+                <span
+                  className={[
+                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-medium border",
+                    previewColor,
+                  ].join(" ")}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                  {previewStatus}
+                </span>
+              </div>
+            </div>
             <input
-              type="text"
+              type="range"
+              min={0}
+              max={100}
+              value={trustScore}
+              onChange={(e) => setTrustScore(Number(e.target.value))}
+              className="w-full accent-[#ff4d2e] h-2"
+            />
+          </div>
+
+          <Field label="Description">
+            <textarea
               required
-              value={ownerName}
-              onChange={(e) => setOwnerName(e.target.value)}
-              placeholder="Alex Carter"
-              className="w-full bg-transparent outline-none text-[13.5px] text-white placeholder:text-[#5a5a63]"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Streamed product events from web, mobile, and server-side SDKs."
+              className="w-full bg-transparent outline-none text-[13.5px] text-white placeholder:text-[#5a5a63] resize-none py-2"
             />
           </Field>
 
-          {mode === "create" && (
-            <div className="flex items-start gap-2 rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-3 py-2.5 text-[11.5px] text-[#a1a1aa]">
-              <Sparkles className="h-3.5 w-3.5 mt-0.5 text-[#ff7a59] shrink-0" />
-              <span>
-                Trust score is auto-generated on creation based on initial signal availability.
-                You'll be able to recompute it from the row menu.
-              </span>
-            </div>
-          )}
+          <Field label="Issue reason (optional)">
+            <textarea
+              rows={2}
+              value={issueReason}
+              onChange={(e) => setIssueReason(e.target.value)}
+              placeholder="Schema drift detected on user_id column."
+              className="w-full bg-transparent outline-none text-[13.5px] text-white placeholder:text-[#5a5a63] resize-none py-2"
+            />
+          </Field>
 
           {error && (
             <div className="rounded-lg border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.08)] px-3 py-2 text-[12px] text-[#fca5a5]">
@@ -214,7 +264,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <div className="text-[10.5px] font-semibold tracking-[0.14em] uppercase text-[#5a5a63] mb-1.5">
         {label}
       </div>
-      <div className="flex items-center gap-2.5 h-11 px-3.5 rounded-xl bg-[#0a0a0d] border border-[#1f1f24] focus-within:border-[#3a2418] focus-within:shadow-[0_0_0_3px_rgba(255,77,46,0.08)] transition-all">
+      <div className="flex items-center gap-2.5 min-h-[2.75rem] px-3.5 rounded-xl bg-[#0a0a0d] border border-[#1f1f24] focus-within:border-[#3a2418] focus-within:shadow-[0_0_0_3px_rgba(255,77,46,0.08)] transition-all">
         {children}
       </div>
     </label>

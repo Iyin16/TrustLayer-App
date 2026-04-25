@@ -53,13 +53,17 @@ export default function Login() {
     setMode(next);
   }
 
-  function signInWithGoogle() {
-    setError(null);
-    setInfo(null);
+  function buildGoogleOAuthUrl() {
+    const endpoint = import.meta.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string;
+    const projectId = import.meta.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string;
     const base = `${window.location.origin}${import.meta.env.BASE_URL}`;
-    const successUrl = base;
-    const failureUrl = `${base}?oauth=failed`;
-    account.createOAuth2Session(OAuthProvider.Google, successUrl, failureUrl);
+    const url = new URL(
+      `${endpoint.replace(/\/$/, "")}/account/sessions/oauth2/${OAuthProvider.Google}`,
+    );
+    url.searchParams.set("project", projectId);
+    url.searchParams.set("success", base);
+    url.searchParams.set("failure", `${base}?oauth=failed`);
+    return url.toString();
   }
 
   async function submit(e: React.FormEvent) {
@@ -164,14 +168,15 @@ export default function Login() {
 
           {(mode === "login" || mode === "signup") && (
             <>
-              <button
-                type="button"
-                onClick={signInWithGoogle}
-                className="mt-6 w-full h-11 rounded-xl bg-white text-[#0a0a0d] text-[13.5px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] hover:bg-[#f4f4f5] active:bg-[#e4e4e7] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              <a
+                href={buildGoogleOAuthUrl()}
+                target="_top"
+                rel="noopener"
+                className="mt-6 w-full h-11 rounded-xl bg-white text-[#0a0a0d] text-[13.5px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] hover:bg-[#f4f4f5] active:bg-[#e4e4e7] transition no-underline"
               >
                 <GoogleIcon className="h-4.5 w-4.5" />
                 Continue with Google
-              </button>
+              </a>
               <div className="mt-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-[#1f1f24]" />
                 <div className="text-[10.5px] font-semibold tracking-[0.18em] uppercase text-[#5a5a63]">

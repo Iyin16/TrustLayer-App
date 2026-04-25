@@ -109,7 +109,7 @@ export default function DatasetDetail() {
               <span className="text-[#3a3a40]">·</span>
               <div className="flex items-center gap-1.5 text-[12.5px] text-[#d8d8de]">
                 <Database className="h-3.5 w-3.5 text-[#a1a1aa]" />
-                {ds.source} · {ds.domain}
+                {ds.source}
               </div>
               <span className="text-[#3a3a40]">·</span>
               <div className="flex items-center gap-1.5 text-[12.5px] text-[#d8d8de]">

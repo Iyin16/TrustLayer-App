@@ -125,7 +125,7 @@ function DetailPanel({ ds, onClose }: { ds: Dataset; onClose: () => void }) {
           <div>
             <div className="text-[10.5px] font-semibold tracking-[0.18em] uppercase text-[#5a5a63]">Dataset</div>
             <h3 className="mt-2 text-[20px] font-semibold tracking-tight text-white">{ds.name}</h3>
-            <div className="mt-1 text-[12.5px] text-[#a1a1aa]">{ds.source} · {ds.domain}</div>
+            <div className="mt-1 text-[12.5px] text-[#a1a1aa]">{ds.source}</div>
           </div>
           <button
             onClick={onClose}
@@ -217,7 +217,7 @@ export default function Datasets() {
     const list = datasets.filter((d) => {
       if (source !== "All" && d.source !== source) return false;
       if (status !== "All" && d.status !== status) return false;
-      if (query && !`${d.name} ${d.ownerName} ${d.domain}`.toLowerCase().includes(query.toLowerCase())) return false;
+      if (query && !`${d.name} ${d.ownerName} ${d.source}`.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
     const sorted = [...list];
@@ -336,7 +336,7 @@ export default function Datasets() {
                         <span className="text-[13.5px] font-medium text-white group-hover:text-[#ff7a59] transition-colors">{ds.name}</span>
                         {trustBadge(ds.trust)}
                       </div>
-                      <div className="text-[11.5px] text-[#5a5a63] mt-0.5">{ds.source} · {ds.domain}</div>
+                      <div className="text-[11.5px] text-[#5a5a63] mt-0.5">{ds.source}</div>
                     </div>
                     <div className="relative pointer-events-none flex items-center gap-2.5">
                       <div className="h-7 w-7 rounded-full bg-[#1f1f24] flex items-center justify-center text-[10.5px] font-semibold text-[#a8a8b3]">{ds.ownerInitials}</div>

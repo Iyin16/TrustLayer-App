@@ -169,7 +169,7 @@ export function DatasetTable({
               <div>
                 <div className="text-[13.5px] font-medium text-white">{ds.name}</div>
                 <div className="text-[11.5px] text-[#5a5a63] mt-0.5">
-                  {ds.source} · {ds.domain}
+                  {ds.source}
                 </div>
               </div>
               <div className="flex items-center gap-2.5">

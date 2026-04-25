@@ -15,7 +15,7 @@ import { account, OAuthProvider } from "../lib/appwrite";
 type Mode = "login" | "signup" | "forgot" | "reset";
 
 export default function Login() {
-  const { login, signup } = useAuth();
+  const { login, signup, refresh } = useAuth();
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,6 +25,7 @@ export default function Login() {
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [oauthBusy, setOauthBusy] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -61,9 +62,66 @@ export default function Login() {
       `${endpoint.replace(/\/$/, "")}/account/sessions/oauth2/${OAuthProvider.Google}`,
     );
     url.searchParams.set("project", projectId);
-    url.searchParams.set("success", base);
+    url.searchParams.set("success", `${base}?oauth=success`);
     url.searchParams.set("failure", `${base}?oauth=failed`);
     return url.toString();
+  }
+
+  async function signInWithGoogle() {
+    setError(null);
+    setInfo(null);
+
+    const oauthUrl = buildGoogleOAuthUrl();
+    const popup = window.open(
+      oauthUrl,
+      "appwrite-oauth-google",
+      "width=520,height=640,menubar=no,toolbar=no,location=yes,status=no",
+    );
+
+    if (!popup) {
+      setError(
+        "Pop-up was blocked. Allow pop-ups for this site, then click 'Continue with Google' again.",
+      );
+      return;
+    }
+
+    setOauthBusy(true);
+    setInfo("Waiting for you to finish signing in with Google…");
+
+    const start = Date.now();
+    const TIMEOUT_MS = 3 * 60 * 1000;
+
+    const pollId = window.setInterval(async () => {
+      if (Date.now() - start > TIMEOUT_MS) {
+        window.clearInterval(pollId);
+        setOauthBusy(false);
+        setInfo(null);
+        setError("Google sign-in timed out. Please try again.");
+        if (!popup.closed) popup.close();
+        return;
+      }
+
+      const u = await refresh();
+      if (u) {
+        window.clearInterval(pollId);
+        setOauthBusy(false);
+        setInfo(null);
+        if (!popup.closed) popup.close();
+        return;
+      }
+
+      if (popup.closed) {
+        window.clearInterval(pollId);
+        setOauthBusy(false);
+        setInfo(null);
+        const finalUser = await refresh();
+        if (!finalUser) {
+          setError(
+            "Google sign-in window was closed before completing. If you finished signing in, refresh the page.",
+          );
+        }
+      }
+    }, 1500);
   }
 
   async function submit(e: React.FormEvent) {
@@ -168,15 +226,21 @@ export default function Login() {
 
           {(mode === "login" || mode === "signup") && (
             <>
-              <a
-                href={buildGoogleOAuthUrl()}
-                target="_top"
-                rel="noopener"
-                className="mt-6 w-full h-11 rounded-xl bg-white text-[#0a0a0d] text-[13.5px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] hover:bg-[#f4f4f5] active:bg-[#e4e4e7] transition no-underline"
+              <button
+                type="button"
+                onClick={signInWithGoogle}
+                disabled={oauthBusy || busy}
+                className="mt-6 w-full h-11 rounded-xl bg-white text-[#0a0a0d] text-[13.5px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] hover:bg-[#f4f4f5] active:bg-[#e4e4e7] transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <GoogleIcon className="h-4.5 w-4.5" />
-                Continue with Google
-              </a>
+                {oauthBusy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <GoogleIcon className="h-4.5 w-4.5" />
+                    Continue with Google
+                  </>
+                )}
+              </button>
               <div className="mt-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-[#1f1f24]" />
                 <div className="text-[10.5px] font-semibold tracking-[0.18em] uppercase text-[#5a5a63]">

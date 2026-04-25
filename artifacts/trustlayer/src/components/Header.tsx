@@ -1,11 +1,34 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Bell, Settings, LogOut } from "lucide-react";
+import { Link } from "wouter";
+import { Search, Bell, Settings, LogOut, Loader2 } from "lucide-react";
 import { useAuth, userInitials } from "../lib/auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function Header() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await logout();
+    } finally {
+      setSigningOut(false);
+      setConfirmOpen(false);
+    }
+  }
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -65,15 +88,29 @@ export function Header() {
             </button>
 
             {open && (
-              <div className="absolute right-0 top-[calc(100%+6px)] w-[220px] rounded-xl border border-[#1f1f24] bg-[#0d0d10] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
-                <div className="px-3.5 py-3 border-b border-[#16161a]">
-                  <div className="text-[12.5px] font-semibold text-white truncate">{name}</div>
-                  <div className="text-[11px] text-[#5a5a63] truncate">{email}</div>
+              <div className="absolute right-0 top-[calc(100%+6px)] w-[240px] rounded-xl border border-[#1f1f24] bg-[#0d0d10] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
+                <div className="px-3.5 py-3 border-b border-[#16161a] flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#ff4d2e] to-[#a8260f] flex items-center justify-center text-[11.5px] font-semibold text-white shrink-0">
+                    {initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[12.5px] font-semibold text-white truncate">{name}</div>
+                    <div className="text-[11px] text-[#5a5a63] truncate">{email}</div>
+                  </div>
                 </div>
+                <Link
+                  href="/settings"
+                  onClick={() => setOpen(false)}
+                  className="w-full px-3.5 py-2.5 flex items-center gap-2.5 text-[12.5px] text-[#a1a1aa] hover:bg-[#101014] hover:text-white transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                  Account settings
+                </Link>
+                <div className="h-px bg-[#16161a]" />
                 <button
                   onClick={() => {
                     setOpen(false);
-                    logout();
+                    setConfirmOpen(true);
                   }}
                   className="w-full px-3.5 py-2.5 flex items-center gap-2.5 text-[12.5px] text-[#a1a1aa] hover:bg-[#101014] hover:text-white transition-colors"
                 >
@@ -85,6 +122,44 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent className="border-[#1f1f24] bg-[#0d0d10] text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Sign out of TrustLayer?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#a1a1aa]">
+              {email
+                ? `You'll be signed out of ${email} on this device. You can sign back in anytime.`
+                : "You'll be signed out on this device. You can sign back in anytime."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={signingOut}
+              className="border-[#1f1f24] bg-transparent text-[#a1a1aa] hover:bg-[#101014] hover:text-white"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleSignOut();
+              }}
+              disabled={signingOut}
+              className="bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] text-white hover:brightness-110"
+            >
+              {signingOut ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Signing out…
+                </span>
+              ) : (
+                "Sign out"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 }

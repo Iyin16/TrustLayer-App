@@ -58,7 +58,10 @@ export function Sidebar() {
           <div className="h-10 w-10 rounded-xl bg-[#ff4d2e] flex items-center justify-center shadow-[0_8px_24px_-6px_rgba(255,106,31,0.6)]">
             <Shield className="h-5 w-5 text-white" strokeWidth={2.5} />
           </div>
-          <span className="text-[17px] font-semibold tracking-tight">TrustLayer</span>
+          <div>
+            <span className="text-[17px] font-semibold tracking-tight block leading-tight">TrustLayer</span>
+            <span className="text-[10px] text-[#5a5a63] leading-tight block mt-0.5">Data trust intelligence</span>
+          </div>
         </Link>
       </div>
 

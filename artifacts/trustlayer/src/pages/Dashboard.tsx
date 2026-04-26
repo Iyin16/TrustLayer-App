@@ -4,7 +4,6 @@ import {
   ShieldCheck,
   AlertTriangle,
   ShieldAlert,
-  Download,
   Plus,
   Sparkles,
   Network,
@@ -12,6 +11,7 @@ import {
   RefreshCw,
   Loader2,
   XCircle,
+  Shield,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
@@ -204,7 +204,6 @@ export default function Dashboard() {
         description={headerDescription}
         actions={
           <>
-            <GhostButton icon={Download}>Export report</GhostButton>
             {!isDemo && openMetadata && (
               <GhostButton
                 icon={syncing ? Loader2 : RefreshCw}
@@ -245,6 +244,7 @@ export default function Dashboard() {
       )}
 
       <KpiCards items={kpis} />
+      {counts.total > 0 && <ExecutiveSummaryCard counts={counts} />}
       <DatasetTable
         rows={datasets}
         loading={loading}
@@ -288,6 +288,79 @@ export default function Dashboard() {
   );
 }
 
+function ExecutiveSummaryCard({
+  counts,
+}: {
+  counts: { total: number; healthy: number; warning: number; atRisk: number; avg: number };
+}) {
+  const { total, healthy, warning, atRisk, avg } = counts;
+  let headline: string;
+  let tone: "success" | "warning" | "danger";
+  if (atRisk > 0) {
+    headline = `${atRisk} dataset${atRisk === 1 ? "" : "s"} at risk — review before use in reporting.`;
+    tone = "danger";
+  } else if (warning > 0) {
+    headline = `${warning} dataset${warning === 1 ? "" : "s"} in the warning band — ownership gaps detected.`;
+    tone = "warning";
+  } else {
+    headline = `All ${total} datasets healthy — metadata complete, ownership assigned.`;
+    tone = "success";
+  }
+
+  const borderColor =
+    tone === "success"
+      ? "border-[rgba(52,211,153,0.20)]"
+      : tone === "warning"
+        ? "border-[rgba(251,191,36,0.20)]"
+        : "border-[rgba(248,113,113,0.20)]";
+  const bgColor =
+    tone === "success"
+      ? "from-[rgba(52,211,153,0.04)]"
+      : tone === "warning"
+        ? "from-[rgba(251,191,36,0.04)]"
+        : "from-[rgba(248,113,113,0.04)]";
+  const dotColor =
+    tone === "success" ? "bg-[#34d399]" : tone === "warning" ? "bg-[#fbbf24]" : "bg-[#f87171]";
+
+  return (
+    <div
+      className={[
+        "relative rounded-2xl border bg-gradient-to-b to-[#0a0a0d] px-5 py-4 overflow-hidden shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset]",
+        borderColor,
+        bgColor,
+      ].join(" ")}
+    >
+      <span className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(255,77,46,0.10),transparent_65%)] blur-2xl" />
+      <div className="relative flex items-start gap-4">
+        <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#ff4d2e] to-[#a8260f] flex items-center justify-center shadow-[0_0_20px_rgba(255,77,46,0.30)] shrink-0 mt-0.5">
+          <Shield className="h-4 w-4 text-white" strokeWidth={2.5} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10.5px] font-semibold tracking-[0.18em] uppercase bg-gradient-to-r from-[#ff7a59] to-[#ff4d2e] bg-clip-text text-transparent">
+              Executive Summary
+            </span>
+            <span className={["h-1.5 w-1.5 rounded-full", dotColor].join(" ")} />
+            <span className="text-[10.5px] text-[#5a5a63]">
+              Avg trust {avg}/100 · {total} datasets
+            </span>
+          </div>
+          <p className="mt-1.5 text-[13.5px] font-medium text-white leading-snug">{headline}</p>
+          <p className="mt-1 text-[11.5px] text-[#6a6a73] leading-relaxed">
+            Transforming OpenMetadata into actionable trust intelligence. {healthy} healthy · {warning} warning · {atRisk} at risk.
+          </p>
+        </div>
+        <div className="hidden sm:flex items-center gap-4 shrink-0">
+          <div className="text-right">
+            <div className="text-[24px] font-semibold tabular-nums text-white leading-none">{avg}</div>
+            <div className="text-[10px] text-[#5a5a63] mt-1 uppercase tracking-wide">avg score</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SyncStatus({
   result,
   error,
@@ -328,7 +401,7 @@ function SyncStatus({
           OpenMetadata sync complete
         </div>
         <div className="text-[11.5px] text-[#a1a1aa] mt-0.5">
-          {total} table{total === 1 ? "" : "s"} fetched · {created} new · {updated} updated
+          {total} asset{total === 1 ? "" : "s"} synced from OpenMetadata · {created} new · {updated} updated
           {failed > 0 ? ` · ${failed} failed` : ""}
         </div>
         {failed > 0 && result.errors.length > 0 && (

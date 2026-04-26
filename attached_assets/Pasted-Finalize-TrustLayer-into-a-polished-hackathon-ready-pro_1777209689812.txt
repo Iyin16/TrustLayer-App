@@ -1,0 +1,166 @@
+Finalize TrustLayer into a polished hackathon-ready product focused on OpenMetadata integration, trust intelligence, and judge-ready presentation quality.
+
+## CORE GOAL
+
+TrustLayer should feel like a real SaaS product that helps teams know what data they can trust.
+
+## 1. OPENMETADATA INTEGRATION (HIGH PRIORITY)
+
+Improve the existing Integrations page.
+
+Add OpenMetadata integration card with:
+
+* OpenMetadata branding/title
+* Base URL field
+* API Token field
+* Connect button
+* Sync Metadata button
+
+On successful sync:
+
+* import realistic OpenMetadata-style datasets into database
+* show success message: “12 assets synced from OpenMetadata”
+* show last synced timestamp
+* tag imported assets with source = OpenMetadata
+
+Use realistic imported sample assets:
+
+* revenue_warehouse
+* customer_events
+* inventory_live_feed
+* supplier_sync_feed
+* finance_backup_raw
+* user_profiles_master
+
+## 2. TRUST SCORING SYSTEM
+
+Trust score must NEVER be user editable.
+
+System auto-generates trust_score and status.
+
+Status rules:
+
+* 80–100 = Healthy
+* 60–79 = Warning
+* 0–59 = At Risk
+
+Use logic based on:
+
+* missing owner lowers score
+* missing description lowers score
+* stale updates lowers score
+* imported from trusted source boosts score
+
+## 3. DATASET TABLE / DASHBOARD
+
+Show datasets with columns:
+
+* dataset name
+* owner
+* source
+* trust score
+* status badge
+* last updated
+
+Trust score must be read-only.
+
+## 4. TRUST EXPLANATIONS
+
+For every dataset, add expandable “Why?” or “Explain” action.
+
+Show reasons such as:
+
+* Missing owner
+* Freshness delayed
+* Incomplete documentation
+* Strong metadata coverage
+* Recently synced from OpenMetadata
+
+## 5. EXECUTIVE SUMMARY CARD (TOP OF DASHBOARD)
+
+Add a premium summary card:
+
+Example:
+“Today 4 assets need attention. Revenue reporting confidence is moderate.”
+
+Also show:
+
+* total datasets
+* healthy count
+* warning count
+* at risk count
+* average trust score
+
+## 6. AI ASSISTANT PANEL
+
+Keep lightweight assistant focused only on TrustLayer data.
+
+Features:
+
+* Explain why selected dataset is risky
+* Show top 3 risky datasets
+* Suggest remediation steps
+
+Do NOT behave like a general chatbot.
+
+## 7. SETTINGS / PROFILE
+
+Ensure profile loads real logged-in user data, not demo placeholders.
+
+Editable fields:
+
+* full name
+* role
+* organization
+* timezone
+
+Save changes persistently.
+
+## 8. NOTIFICATIONS
+
+Keep visible and working in settings.
+
+Include:
+
+* enable / disable notifications
+* alert when trust score drops by 5+
+* save preference
+
+## 9. SECURITY + API TOKENS
+
+Keep these sections visible.
+
+Security:
+
+* password reset UI
+* session/device UI (clean placeholder acceptable)
+
+API Tokens:
+
+* Generate token button
+* show realistic token string
+* save token
+
+## 10. POLISH / TECHNICAL QUALITY
+
+* Remove broken buttons
+* Remove demo names/placeholders
+* Add loading states
+* Add empty states
+* Keep UI premium and consistent
+* Fast navigation
+* Responsive layout
+
+## 11. HACKATHON POSITIONING
+
+Add subtle tagline somewhere:
+
+“Transforming OpenMetadata into actionable trust intelligence.”
+
+## IMPORTANT RULES
+
+* Do not redesign entire app
+* Improve current UI
+* Keep existing pages
+* Focus on working flows and polished presentation
+* Prioritize stability over complexity

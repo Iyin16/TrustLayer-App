@@ -5,6 +5,7 @@ import Datasets from "./pages/Datasets";
 import DatasetDetail from "./pages/DatasetDetail";
 import Lineage from "./pages/Lineage";
 import Assistant from "./pages/Assistant";
+import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/datasets/:name" component={DatasetDetail} />
           <Route path="/lineage" component={Lineage} />
           <Route path="/assistant" component={Assistant} />
+          <Route path="/reports" component={Reports} />
           <Route path="/settings" component={Settings} />
           <Route>
             <Redirect to="/dashboard" />

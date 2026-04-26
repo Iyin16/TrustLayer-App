@@ -5,6 +5,7 @@ import {
   Database,
   GitBranch,
   Sparkles,
+  FileText,
   Settings,
 } from "lucide-react";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
@@ -16,6 +17,7 @@ const navItems: NavItem[] = [
   { label: "Datasets", icon: Database, href: "/datasets" },
   { label: "Lineage", icon: GitBranch, href: "/lineage" },
   { label: "AI Assistant", icon: Sparkles, href: "/assistant" },
+  { label: "Reports", icon: FileText, href: "/reports" },
 ];
 
 const secondaryItems: NavItem[] = [

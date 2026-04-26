@@ -7,11 +7,14 @@ import Lineage from "./pages/Lineage";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
+import Onboarding from "./pages/Onboarding";
 import { useAuth } from "./lib/auth";
+import { useWorkspace } from "./lib/workspace";
 import { Loader2 } from "lucide-react";
 
 export default function App() {
   const { user, loading } = useAuth();
+  const { ready, mode } = useWorkspace();
 
   if (loading) {
     return (
@@ -23,6 +26,18 @@ export default function App() {
 
   if (!user) {
     return <Login />;
+  }
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-5 w-5 text-[#ff4d2e] animate-spin" />
+      </div>
+    );
+  }
+
+  if (!mode) {
+    return <Onboarding />;
   }
 
   return (

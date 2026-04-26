@@ -6,13 +6,18 @@ import {
   ShieldAlert,
   Download,
   Plus,
+  Sparkles,
+  Network,
+  CheckCircle2,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
 import { DatasetTable } from "../components/DatasetTable";
 import { DatasetFormModal, type DatasetFormValues } from "../components/DatasetFormModal";
+import { OpenMetadataModal } from "../components/OpenMetadataModal";
 import { useAuth } from "../lib/auth";
-import { type Dataset } from "../lib/data";
+import { useWorkspace } from "../lib/workspace";
+import { datasets as demoDatasets, type Dataset } from "../lib/data";
 import {
   createDataset,
   docToDataset,
@@ -28,10 +33,13 @@ type ModalState =
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { mode, openMetadata } = useWorkspace();
+  const isDemo = mode === "demo";
   const [docs, setDocs] = useState<DatasetDoc[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isDemo);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState>({ mode: "closed" });
+  const [omOpen, setOmOpen] = useState(false);
 
   const greetingName = useMemo(() => {
     const n = user?.name?.trim();
@@ -41,7 +49,12 @@ export default function Dashboard() {
   }, [user]);
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (isDemo || !user) {
+      setDocs([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -53,16 +66,16 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isDemo]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const datasets: Dataset[] = useMemo(
-    () => docs.map(docToDataset).sort((a, b) => b.trust - a.trust),
-    [docs],
-  );
+  const datasets: Dataset[] = useMemo(() => {
+    if (isDemo) return [...demoDatasets].sort((a, b) => b.trust - a.trust);
+    return docs.map(docToDataset).sort((a, b) => b.trust - a.trust);
+  }, [docs, isDemo]);
 
   const counts = useMemo(() => {
     const total = datasets.length;
@@ -120,40 +133,57 @@ export default function Dashboard() {
   }
 
   function openEdit(ds: Dataset) {
+    if (isDemo) return;
     const doc = docs.find((d) => d.name === ds.name);
     if (doc) setModal({ mode: "edit", doc });
   }
 
+  const headerDescription = isDemo
+    ? `Exploring the demo workspace · ${counts.total} sample dataset${counts.total === 1 ? "" : "s"}.`
+    : counts.total === 0
+      ? "You don't have any datasets yet. Add one to get started."
+      : `Here's the trust state of your ${counts.total} dataset${counts.total === 1 ? "" : "s"}.`;
+
   return (
     <>
       <PageHeader
-        eyebrow="Workspace Overview"
+        eyebrow={isDemo ? "Demo Workspace" : "Workspace Overview"}
         title="Good morning,"
         highlight={greetingName}
-        description={
-          counts.total === 0
-            ? "You don't have any datasets yet. Add one to get started."
-            : `Here's the trust state of your ${counts.total} dataset${counts.total === 1 ? "" : "s"}.`
-        }
+        description={headerDescription}
         actions={
           <>
             <GhostButton icon={Download}>Export report</GhostButton>
-            <EmberButton icon={Plus} onClick={() => setModal({ mode: "create" })}>
-              New dataset
-            </EmberButton>
+            {!isDemo && (
+              <EmberButton icon={Plus} onClick={() => setModal({ mode: "create" })}>
+                New dataset
+              </EmberButton>
+            )}
           </>
         }
       />
+
+      {isDemo && <DemoBanner />}
+      {!isDemo && <UserWorkspaceBanner
+        connected={!!openMetadata}
+        host={openMetadata?.url}
+        onConnect={() => setOmOpen(true)}
+      />}
+
       <KpiCards items={kpis} />
       <DatasetTable
         rows={datasets}
         loading={loading}
         error={error}
         onRetry={load}
-        onEdit={openEdit}
-        onCreate={() => setModal({ mode: "create" })}
+        onEdit={isDemo ? undefined : openEdit}
+        onCreate={isDemo ? undefined : () => setModal({ mode: "create" })}
         emptyTitle="No datasets yet"
-        emptyDescription="Register your first dataset to start tracking its trust score."
+        emptyDescription={
+          isDemo
+            ? "The demo workspace is empty for this filter."
+            : "Register your first dataset to start tracking its trust score."
+        }
       />
 
       <DatasetFormModal
@@ -176,6 +206,81 @@ export default function Dashboard() {
         onSubmit={modal.mode === "edit" ? handleUpdate : handleCreate}
       />
 
+      <OpenMetadataModal open={omOpen} onClose={() => setOmOpen(false)} />
     </>
+  );
+}
+
+function DemoBanner() {
+  return (
+    <div className="relative rounded-xl border border-[#3a2418] bg-gradient-to-r from-[#1a1410] via-[#16110d] to-[#0d0b09] px-4 py-3 flex items-center gap-3 overflow-hidden">
+      <span className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(255,77,46,0.18),transparent_65%)] blur-2xl" />
+      <span className="relative h-8 w-8 rounded-lg bg-gradient-to-br from-[#ff4d2e] to-[#a8260f] flex items-center justify-center shadow-[0_0_14px_rgba(255,77,46,0.35)]">
+        <Sparkles className="h-4 w-4 text-white" />
+      </span>
+      <div className="relative flex-1 min-w-0">
+        <div className="text-[12.5px] font-semibold text-white">
+          You're exploring the Demo Workspace
+        </div>
+        <div className="text-[11.5px] text-[#a1a1aa]">
+          Sample data is read-only. Switch to Your Workspace from the sidebar to add and
+          edit datasets.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserWorkspaceBanner({
+  connected,
+  host,
+  onConnect,
+}: {
+  connected: boolean;
+  host?: string;
+  onConnect: () => void;
+}) {
+  if (connected) {
+    return (
+      <div className="rounded-xl border border-[rgba(52,211,153,0.25)] bg-[rgba(52,211,153,0.05)] px-4 py-3 flex items-center gap-3">
+        <span className="h-8 w-8 rounded-lg bg-[rgba(52,211,153,0.10)] ring-1 ring-[rgba(52,211,153,0.28)] flex items-center justify-center">
+          <CheckCircle2 className="h-4 w-4 text-[#34d399]" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-[12.5px] font-semibold text-white">
+            Connected to OpenMetadata
+          </div>
+          <div className="text-[11.5px] text-[#a1a1aa] truncate">{host}</div>
+        </div>
+        <button
+          onClick={onConnect}
+          className="h-9 px-3 rounded-lg border border-[#2a2a30] bg-[#0d0d10] hover:bg-[#16161a] text-[12px] font-medium text-white transition-colors"
+        >
+          Manage
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-[#1f1f24] bg-[#0d0d10] px-4 py-3 flex items-center gap-3">
+      <span className="h-8 w-8 rounded-lg bg-[#16161a] border border-[#1f1f24] flex items-center justify-center">
+        <Network className="h-4 w-4 text-[#ff7a59]" />
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="text-[12.5px] font-semibold text-white">
+          Connect OpenMetadata to ingest your catalog
+        </div>
+        <div className="text-[11.5px] text-[#a1a1aa]">
+          Bring in datasets, owners, and lineage from your existing OpenMetadata workspace.
+        </div>
+      </div>
+      <button
+        onClick={onConnect}
+        className="h-9 px-3 rounded-lg bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] text-white text-[12px] font-semibold shadow-[0_8px_24px_-10px_rgba(255,77,46,0.7),inset_0_1px_0_0_rgba(255,255,255,0.15)] hover:brightness-110 transition flex items-center gap-1.5"
+      >
+        <Network className="h-3.5 w-3.5" />
+        Connect
+      </button>
+    </div>
   );
 }

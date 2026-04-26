@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useParams, Redirect } from "wouter";
 import {
   ChevronRight,
@@ -15,10 +16,19 @@ import {
   GitBranch,
   ExternalLink,
   Download,
+  Loader2,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { TrustRing } from "../components/TrustRing";
-import { datasets, statusPill, trustExplanation } from "../lib/data";
+import {
+  datasets as demoDatasets,
+  statusPill,
+  trustExplanation,
+  type Dataset,
+} from "../lib/data";
+import { useAuth } from "../lib/auth";
+import { useWorkspace } from "../lib/workspace";
+import { docToDataset, listMyDatasets } from "../lib/datasets";
 
 function trustTier(trust: number) {
   if (trust >= 80) return { label: "Healthy · 80–100", tone: "bg-[rgba(52,211,153,0.10)] text-[#34d399] border-[rgba(52,211,153,0.28)]" };
@@ -71,8 +81,58 @@ function PillarCard({
 
 export default function DatasetDetail() {
   const params = useParams<{ name: string }>();
-  const ds = datasets.find((d) => d.name === params.name);
-  if (!ds) return <Redirect to="/datasets" />;
+  const { user } = useAuth();
+  const { mode } = useWorkspace();
+  const isDemo = mode === "demo";
+  const [ds, setDs] = useState<Dataset | null>(() =>
+    isDemo ? demoDatasets.find((d) => d.name === params.name) ?? null : null,
+  );
+  const [loading, setLoading] = useState(!isDemo);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (isDemo) {
+      const match = demoDatasets.find((d) => d.name === params.name) ?? null;
+      setDs(match);
+      setNotFound(!match);
+      setLoading(false);
+      return;
+    }
+    if (!user) return;
+    setLoading(true);
+    setNotFound(false);
+    listMyDatasets(user.$id)
+      .then((list) => {
+        if (cancelled) return;
+        const doc = list.find((d) => d.name === params.name);
+        if (!doc) {
+          setNotFound(true);
+          setDs(null);
+        } else {
+          setDs(docToDataset(doc));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setNotFound(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isDemo, user, params.name]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-[#a1a1aa] text-[12.5px] gap-2">
+        <Loader2 className="h-4 w-4 animate-spin text-[#ff4d2e]" />
+        Loading dataset…
+      </div>
+    );
+  }
+  if (notFound || !ds) return <Redirect to="/datasets" />;
 
   const tier = trustTier(ds.trust);
   const stale = ds.pillars.freshness < 70;

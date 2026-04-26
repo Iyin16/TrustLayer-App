@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Plus,
@@ -20,18 +20,20 @@ import {
   Network,
   FlaskConical,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
 import { TrustRing } from "../components/TrustRing";
-import { datasets, statusPill, trustCounts, trustExplanation, type Dataset } from "../lib/data";
-
-const kpis: Kpi[] = [
-  { label: "Connected Sources", value: "4", delta: "Snowflake · BigQuery · Postgres · Databricks", icon: Database, tone: "ember" },
-  { label: "Healthy", value: String(trustCounts.healthy), delta: "Score 80 – 100", icon: ShieldCheck, tone: "success" },
-  { label: "Warning", value: String(trustCounts.warning), delta: "Score 60 – 79", icon: AlertTriangle, tone: "warning" },
-  { label: "At Risk", value: String(trustCounts.atRisk), delta: "Score 0 – 59", icon: Clock, tone: "danger" },
-];
+import {
+  datasets as demoDatasets,
+  statusPill,
+  trustExplanation,
+  type Dataset,
+} from "../lib/data";
+import { useAuth } from "../lib/auth";
+import { useWorkspace } from "../lib/workspace";
+import { docToDataset, listMyDatasets, type DatasetDoc } from "../lib/datasets";
 
 const sources = ["All", "Snowflake", "BigQuery", "Postgres", "Redshift", "Databricks"] as const;
 const statuses = ["All", "Healthy", "Warning", "At Risk"] as const;
@@ -207,11 +209,66 @@ function DetailPanel({ ds, onClose }: { ds: Dataset; onClose: () => void }) {
 }
 
 export default function Datasets() {
+  const { user } = useAuth();
+  const { mode } = useWorkspace();
+  const isDemo = mode === "demo";
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<typeof sources[number]>("All");
   const [status, setStatus] = useState<typeof statuses[number]>("All");
   const [sort, setSort] = useState<SortOption>("Highest Trust Score");
-  const [selected, setSelected] = useState<Dataset | null>(datasets[0]);
+  const [docs, setDocs] = useState<DatasetDoc[]>([]);
+  const [loading, setLoading] = useState(!isDemo);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (isDemo || !user) {
+      setDocs([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    listMyDatasets(user.$id)
+      .then((list) => {
+        if (!cancelled) setDocs(list);
+      })
+      .catch(() => {
+        if (!cancelled) setDocs([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isDemo, user]);
+
+  const datasets: Dataset[] = useMemo(
+    () => (isDemo ? demoDatasets : docs.map(docToDataset)),
+    [isDemo, docs],
+  );
+
+  const trustCounts = useMemo(() => {
+    return {
+      healthy: datasets.filter((d) => d.status === "Healthy").length,
+      warning: datasets.filter((d) => d.status === "Warning").length,
+      atRisk: datasets.filter((d) => d.status === "At Risk").length,
+    };
+  }, [datasets]);
+
+  const kpis: Kpi[] = useMemo(
+    () => [
+      { label: "Connected Sources", value: String(new Set(datasets.map((d) => d.source)).size || 0), delta: isDemo ? "Demo: Snowflake · BigQuery · Postgres · Databricks" : "Across your datasets", icon: Database, tone: "ember" },
+      { label: "Healthy", value: String(trustCounts.healthy), delta: "Score 80 – 100", icon: ShieldCheck, tone: "success" },
+      { label: "Warning", value: String(trustCounts.warning), delta: "Score 60 – 79", icon: AlertTriangle, tone: "warning" },
+      { label: "At Risk", value: String(trustCounts.atRisk), delta: "Score 0 – 59", icon: Clock, tone: "danger" },
+    ],
+    [datasets, trustCounts, isDemo],
+  );
+
+  const [selected, setSelected] = useState<Dataset | null>(null);
+  useEffect(() => {
+    setSelected((prev) => prev ?? datasets[0] ?? null);
+  }, [datasets]);
 
   const filtered = useMemo(() => {
     const list = datasets.filter((d) => {
@@ -225,19 +282,27 @@ export default function Datasets() {
     else if (sort === "Lowest Trust Score") sorted.sort((a, b) => a.trust - b.trust);
     else sorted.sort((a, b) => a.updatedMinutes - b.updatedMinutes);
     return sorted;
-  }, [query, source, status, sort]);
+  }, [query, source, status, sort, datasets]);
 
   return (
     <>
       <PageHeader
-        eyebrow="Catalog"
+        eyebrow={isDemo ? "Demo Catalog" : "Catalog"}
         title="Datasets"
-        description="Browse, search, and manage every dataset registered to TrustLayer."
+        description={
+          isDemo
+            ? "Exploring a curated catalog of demo enterprise datasets."
+            : "Browse, search, and manage every dataset registered to TrustLayer."
+        }
         actions={
-          <>
-            <GhostButton icon={Upload}>Import schema</GhostButton>
-            <EmberButton icon={Plus}>New dataset</EmberButton>
-          </>
+          !isDemo ? (
+            <>
+              <GhostButton icon={Upload}>Import schema</GhostButton>
+              <Link href="/dashboard">
+                <EmberButton icon={Plus}>New dataset</EmberButton>
+              </Link>
+            </>
+          ) : null
         }
       />
       <KpiCards items={kpis} />
@@ -309,7 +374,22 @@ export default function Datasets() {
               <div>Status</div>
             </div>
 
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="px-6 py-16 flex items-center justify-center text-[#a1a1aa] text-[12.5px] gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-[#ff4d2e]" />
+                Loading your datasets…
+              </div>
+            ) : datasets.length === 0 ? (
+              <div className="px-6 py-16 text-center">
+                <div className="mx-auto h-12 w-12 rounded-xl bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center">
+                  <Database className="h-5 w-5 text-[#ff7a59]" />
+                </div>
+                <div className="mt-4 text-[14px] font-semibold text-white">No datasets yet</div>
+                <div className="mt-1 text-[12.5px] text-[#a1a1aa]">
+                  Add your first dataset from the dashboard to start tracking trust.
+                </div>
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="px-6 py-16 text-center">
                 <div className="mx-auto h-12 w-12 rounded-xl bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center">
                   <Search className="h-5 w-5 text-[#ff7a59]" />

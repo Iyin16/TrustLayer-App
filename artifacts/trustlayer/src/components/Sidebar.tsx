@@ -7,6 +7,7 @@ import {
   Sparkles,
   Settings,
 } from "lucide-react";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 type NavItem = { label: string; icon: React.ComponentType<{ className?: string }>; href: string };
 
@@ -61,9 +62,13 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <div className="px-3 flex-1">
+      <div className="px-3">
+        <WorkspaceSwitcher />
+      </div>
+
+      <div className="px-3 flex-1 mt-5">
         <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5a5a63]">
-          Workspace
+          Navigation
         </div>
         <nav className="flex flex-col gap-0.5">
           {navItems.map((item) => (

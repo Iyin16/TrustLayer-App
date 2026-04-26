@@ -9,6 +9,9 @@ import {
   Sparkles,
   Network,
   CheckCircle2,
+  RefreshCw,
+  Loader2,
+  XCircle,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
@@ -31,6 +34,7 @@ import {
   updateDataset,
   type DatasetDoc,
 } from "../lib/datasets";
+import { syncFromOpenMetadata, type SyncResult } from "../lib/openmetadata";
 
 type ModalState =
   | { mode: "closed" }
@@ -46,6 +50,9 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState>({ mode: "closed" });
   const [omOpen, setOmOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const greetingName = useMemo(() => {
     const n = user?.name?.trim();
@@ -144,6 +151,23 @@ export default function Dashboard() {
     if (doc) setModal({ mode: "edit", doc });
   }
 
+  async function handleSync() {
+    if (!user || !openMetadata) return;
+    setSyncing(true);
+    setSyncError(null);
+    setSyncResult(null);
+    try {
+      const result = await syncFromOpenMetadata(openMetadata, user.$id);
+      setSyncResult(result);
+      await load();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Sync failed.";
+      setSyncError(msg);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const headerDescription = isDemo
     ? `Exploring the ${DEMO_WORKSPACE_NAME} demo · ${counts.total} sample dataset${counts.total === 1 ? "" : "s"} across the commerce stack.`
     : counts.total === 0
@@ -160,6 +184,16 @@ export default function Dashboard() {
         actions={
           <>
             <GhostButton icon={Download}>Export report</GhostButton>
+            {!isDemo && openMetadata && (
+              <GhostButton
+                icon={syncing ? Loader2 : RefreshCw}
+                onClick={() => {
+                  if (!syncing) void handleSync();
+                }}
+              >
+                {syncing ? "Syncing…" : "Sync from OpenMetadata"}
+              </GhostButton>
+            )}
             {!isDemo && (
               <EmberButton icon={Plus} onClick={() => setModal({ mode: "create" })}>
                 New dataset
@@ -174,7 +208,19 @@ export default function Dashboard() {
         connected={!!openMetadata}
         host={openMetadata?.url}
         onConnect={() => setOmOpen(true)}
+        onSync={openMetadata ? handleSync : undefined}
+        syncing={syncing}
       />}
+      {!isDemo && (syncResult || syncError) && (
+        <SyncStatus
+          result={syncResult}
+          error={syncError}
+          onDismiss={() => {
+            setSyncResult(null);
+            setSyncError(null);
+          }}
+        />
+      )}
 
       <KpiCards items={kpis} />
       <DatasetTable
@@ -212,8 +258,71 @@ export default function Dashboard() {
         onSubmit={modal.mode === "edit" ? handleUpdate : handleCreate}
       />
 
-      <OpenMetadataModal open={omOpen} onClose={() => setOmOpen(false)} />
+      <OpenMetadataModal
+        open={omOpen}
+        onClose={() => setOmOpen(false)}
+        onConnected={() => void handleSync()}
+      />
     </>
+  );
+}
+
+function SyncStatus({
+  result,
+  error,
+  onDismiss,
+}: {
+  result: SyncResult | null;
+  error: string | null;
+  onDismiss: () => void;
+}) {
+  if (error) {
+    return (
+      <div className="rounded-xl border border-[rgba(248,113,113,0.28)] bg-[rgba(248,113,113,0.06)] px-4 py-3 flex items-start gap-3">
+        <span className="h-8 w-8 rounded-lg bg-[rgba(248,113,113,0.10)] ring-1 ring-[rgba(248,113,113,0.28)] flex items-center justify-center shrink-0">
+          <XCircle className="h-4 w-4 text-[#f87171]" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-[12.5px] font-semibold text-white">OpenMetadata sync failed</div>
+          <div className="text-[11.5px] text-[#fca5a5] mt-0.5 break-words">{error}</div>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="text-[11px] text-[#a1a1aa] hover:text-white transition-colors"
+        >
+          Dismiss
+        </button>
+      </div>
+    );
+  }
+  if (!result) return null;
+  const { total, created, updated, failed } = result;
+  return (
+    <div className="rounded-xl border border-[rgba(255,138,74,0.28)] bg-[rgba(255,138,74,0.06)] px-4 py-3 flex items-start gap-3">
+      <span className="h-8 w-8 rounded-lg bg-[rgba(255,138,74,0.10)] ring-1 ring-[rgba(255,138,74,0.28)] flex items-center justify-center shrink-0">
+        <CheckCircle2 className="h-4 w-4 text-[#ff7a59]" />
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="text-[12.5px] font-semibold text-white">
+          OpenMetadata sync complete
+        </div>
+        <div className="text-[11.5px] text-[#a1a1aa] mt-0.5">
+          {total} table{total === 1 ? "" : "s"} fetched · {created} new · {updated} updated
+          {failed > 0 ? ` · ${failed} failed` : ""}
+        </div>
+        {failed > 0 && result.errors.length > 0 && (
+          <div className="mt-1.5 text-[11px] text-[#fca5a5] truncate">
+            First error: {result.errors[0]}
+          </div>
+        )}
+      </div>
+      <button
+        onClick={onDismiss}
+        className="text-[11px] text-[#a1a1aa] hover:text-white transition-colors"
+      >
+        Dismiss
+      </button>
+    </div>
   );
 }
 
@@ -244,10 +353,14 @@ function UserWorkspaceBanner({
   connected,
   host,
   onConnect,
+  onSync,
+  syncing,
 }: {
   connected: boolean;
   host?: string;
   onConnect: () => void;
+  onSync?: () => void;
+  syncing?: boolean;
 }) {
   if (connected) {
     return (
@@ -261,6 +374,20 @@ function UserWorkspaceBanner({
           </div>
           <div className="text-[11.5px] text-[#a1a1aa] truncate">{host}</div>
         </div>
+        {onSync && (
+          <button
+            onClick={onSync}
+            disabled={syncing}
+            className="h-9 px-3 rounded-lg bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] text-white text-[12px] font-semibold shadow-[0_8px_24px_-10px_rgba(255,77,46,0.7),inset_0_1px_0_0_rgba(255,255,255,0.15)] hover:brightness-110 transition flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {syncing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+            {syncing ? "Syncing…" : "Sync now"}
+          </button>
+        )}
         <button
           onClick={onConnect}
           className="h-9 px-3 rounded-lg border border-[#2a2a30] bg-[#0d0d10] hover:bg-[#16161a] text-[12px] font-medium text-white transition-colors"

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
-import { Search, Bell, Settings, LogOut, Loader2 } from "lucide-react";
+import { Search, Bell, Settings, LogOut, Loader2, RotateCcw } from "lucide-react";
 import { useAuth, userInitials } from "../lib/auth";
+import { useWorkspace } from "../lib/workspace";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +16,7 @@ import {
 
 export function Header() {
   const { user, logout } = useAuth();
+  const { resetWorkspace } = useWorkspace();
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -106,6 +108,16 @@ export function Header() {
                   <Settings className="h-4 w-4" />
                   Account settings
                 </Link>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    resetWorkspace();
+                  }}
+                  className="w-full px-3.5 py-2.5 flex items-center gap-2.5 text-[12.5px] text-[#a1a1aa] hover:bg-[#101014] hover:text-white transition-colors"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Show onboarding
+                </button>
                 <div className="h-px bg-[#16161a]" />
                 <button
                   onClick={() => {

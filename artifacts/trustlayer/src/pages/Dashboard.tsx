@@ -34,7 +34,11 @@ import {
   updateDataset,
   type DatasetDoc,
 } from "../lib/datasets";
-import { syncFromOpenMetadata, type SyncResult } from "../lib/openmetadata";
+import {
+  syncFromOpenMetadata,
+  syncMockedMetadata,
+  type SyncResult,
+} from "../lib/openmetadata";
 
 type ModalState =
   | { mode: "closed" }
@@ -168,6 +172,23 @@ export default function Dashboard() {
     }
   }
 
+  async function handleMockSync() {
+    if (!user) return;
+    setSyncing(true);
+    setSyncError(null);
+    setSyncResult(null);
+    try {
+      const result = await syncMockedMetadata(user.$id);
+      setSyncResult(result);
+      await load();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Couldn't import sample data.";
+      setSyncError(msg);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const headerDescription = isDemo
     ? `Exploring the ${DEMO_WORKSPACE_NAME} demo · ${counts.total} sample dataset${counts.total === 1 ? "" : "s"} across the commerce stack.`
     : counts.total === 0
@@ -209,6 +230,7 @@ export default function Dashboard() {
         host={openMetadata?.url}
         onConnect={() => setOmOpen(true)}
         onSync={openMetadata ? handleSync : undefined}
+        onImportMock={handleMockSync}
         syncing={syncing}
       />}
       {!isDemo && (syncResult || syncError) && (
@@ -353,12 +375,14 @@ function UserWorkspaceBanner({
   host,
   onConnect,
   onSync,
+  onImportMock,
   syncing,
 }: {
   connected: boolean;
   host?: string;
   onConnect: () => void;
   onSync?: () => void;
+  onImportMock?: () => void;
   syncing?: boolean;
 }) {
   if (connected) {
@@ -406,9 +430,24 @@ function UserWorkspaceBanner({
           Connect OpenMetadata to ingest your catalog
         </div>
         <div className="text-[11.5px] text-[#a1a1aa]">
-          Bring in datasets, owners, and lineage from your existing OpenMetadata workspace.
+          Bring in datasets, owners, and lineage from your OpenMetadata workspace
+          {onImportMock ? " — or import sample data to try it out." : "."}
         </div>
       </div>
+      {onImportMock && (
+        <button
+          onClick={onImportMock}
+          disabled={syncing}
+          className="h-9 px-3 rounded-lg border border-[#2a2a30] bg-[#0d0d10] hover:bg-[#16161a] text-[12px] font-medium text-white transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {syncing ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="h-3.5 w-3.5 text-[#ff7a59]" />
+          )}
+          Import sample data
+        </button>
+      )}
       <button
         onClick={onConnect}
         className="h-9 px-3 rounded-lg bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] text-white text-[12px] font-semibold shadow-[0_8px_24px_-10px_rgba(255,77,46,0.7),inset_0_1px_0_0_rgba(255,255,255,0.15)] hover:brightness-110 transition flex items-center gap-1.5"

@@ -235,13 +235,80 @@ async function findExisting(
   return res.documents[0] || null;
 }
 
+/**
+ * Mocked metadata used as a graceful fallback when the user wants to try
+ * the sync pipeline without a real OpenMetadata server (or when the server
+ * isn't reachable from the browser due to CORS).
+ */
+const MOCK_TABLES: OmTable[] = [
+  {
+    id: "mock-orders",
+    name: "orders",
+    fullyQualifiedName: "warehouse.public.orders",
+    service: "Snowflake",
+    owner: "Data Platform",
+    description:
+      "Customer order facts at line-item grain, joined with payments and shipping. Powers daily revenue reporting.",
+    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-customers",
+    name: "customers",
+    fullyQualifiedName: "warehouse.public.customers",
+    service: "Snowflake",
+    owner: "CRM Team",
+    description:
+      "Master customer profile per identity, stitched from web, app, and support sources.",
+    updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-events",
+    name: "product_events",
+    fullyQualifiedName: "analytics.events.product_events",
+    service: "BigQuery",
+    owner: "Growth Analytics",
+    description:
+      "Streamed product events from web and mobile SDKs at session grain.",
+    updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-marketing",
+    name: "ad_spend_daily",
+    fullyQualifiedName: "marketing.reporting.ad_spend_daily",
+    service: "Redshift",
+    owner: "",
+    description: "",
+    updatedAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-inventory",
+    name: "inventory_snapshot",
+    fullyQualifiedName: "ops.warehouse.inventory_snapshot",
+    service: "Databricks",
+    owner: "Operations",
+    description: "SKU-level stock positions snapshot taken every 15 minutes.",
+    updatedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-finance",
+    name: "ledger_nightly",
+    fullyQualifiedName: "finance.archive.ledger_nightly",
+    service: "Postgres",
+    owner: "Unassigned",
+    description: "Nightly finance ledger backup retained for audit.",
+    updatedAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
 export async function syncFromOpenMetadata(
   config: OpenMetadataConfig,
   userId: string,
-  opts: { limit?: number } = {},
+  opts: { limit?: number; useMock?: boolean } = {},
 ): Promise<SyncResult> {
   ensureConfigured();
-  const tables = await fetchTables(config, { limit: opts.limit ?? 50 });
+  const tables = opts.useMock
+    ? MOCK_TABLES
+    : await fetchTables(config, { limit: opts.limit ?? 50 });
   const result: SyncResult = {
     total: tables.length,
     created: 0,
@@ -309,4 +376,13 @@ export async function syncFromOpenMetadata(
   }
 
   return result;
+}
+
+/** Imports the same mocked metadata catalog without requiring a real OpenMetadata server. */
+export async function syncMockedMetadata(userId: string): Promise<SyncResult> {
+  return syncFromOpenMetadata(
+    { url: "mock://sample", token: "mock", connectedAt: new Date().toISOString() },
+    userId,
+    { useMock: true },
+  );
 }

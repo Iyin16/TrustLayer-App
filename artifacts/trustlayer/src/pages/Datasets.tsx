@@ -303,7 +303,7 @@ export default function Datasets() {
       />
       <KpiCards items={kpis} />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5 items-start">
         <Card>
           <div className="px-6 pt-6 pb-5 space-y-5">
             <div className="flex items-end justify-between gap-4 flex-wrap">
@@ -399,14 +399,19 @@ export default function Datasets() {
                 return (
                   <div
                     key={ds.name}
-                    onMouseEnter={() => setSelected(ds)}
                     className={[
-                      "group grid grid-cols-[2fr_1.4fr_1.2fr_0.8fr_1fr_auto] items-center px-6 py-4 border-b border-[#101014] last:border-b-0 transition-colors relative",
+                      "group grid grid-cols-[2fr_1.4fr_1.2fr_0.8fr_1fr_auto] items-center px-6 py-4 border-b border-[#101014] last:border-b-0 transition-colors relative cursor-pointer",
                       active ? "bg-[#101014]" : "hover:bg-[#101014]/60",
                     ].join(" ")}
                   >
                     {active && <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r bg-[#ff4d2e] shadow-[0_0_10px_rgba(255,106,31,0.7)]" />}
-                    <Link href={`/datasets/${ds.name}`} className="absolute inset-0 z-0" aria-label={`Open ${ds.name}`} />
+                    {/* Left-click selects + shows panel; right-click keeps native "Open link in new tab" */}
+                    <a
+                      href={`/datasets/${ds.name}`}
+                      className="absolute inset-0 z-0"
+                      aria-label={`Select ${ds.name}`}
+                      onClick={(e) => { e.preventDefault(); setSelected(ds); }}
+                    />
                     <div className="relative pointer-events-none">
                       <div className="flex items-center gap-2">
                         <span className="text-[13.5px] font-medium text-white group-hover:text-[#ff7a59] transition-colors">{ds.name}</span>
@@ -432,9 +437,16 @@ export default function Datasets() {
               })
             )}
           </div>
+
+          {filtered.length > 0 && (
+            <div className="px-6 py-2.5 border-t border-[#0d0d10] flex items-center gap-1.5 text-[11px] text-[#3a3a40]">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#ff4d2e] opacity-60" />
+              Click a row to preview · Right-click to open full page
+            </div>
+          )}
         </Card>
 
-        <div className="xl:sticky xl:top-24">
+        <div className="lg:sticky lg:top-24">
           {selected ? (
             <DetailPanel ds={selected} onClose={() => setSelected(null)} />
           ) : (
@@ -443,7 +455,7 @@ export default function Datasets() {
                 <Database className="h-5 w-5 text-[#ff7a59]" />
               </div>
               <div className="mt-4 text-[14px] font-semibold text-white">Select a dataset</div>
-              <div className="mt-1 text-[12.5px] text-[#a1a1aa]">Click any row to inspect ownership, checks, and lineage.</div>
+              <div className="mt-1 text-[12.5px] text-[#a1a1aa]">Click any row to preview it here. Right-click a row to open the full detail page.</div>
             </Card>
           )}
         </div>

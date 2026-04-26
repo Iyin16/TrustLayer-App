@@ -108,20 +108,26 @@ export async function updateProfile(
   return merged;
 }
 
-export const TIMEZONE_OPTIONS = [
-  "UTC",
-  "America/Los_Angeles",
-  "America/Denver",
-  "America/Chicago",
-  "America/New_York",
-  "America/Sao_Paulo",
-  "Europe/London",
-  "Europe/Berlin",
-  "Europe/Paris",
-  "Africa/Johannesburg",
-  "Asia/Dubai",
-  "Asia/Kolkata",
-  "Asia/Singapore",
-  "Asia/Tokyo",
-  "Australia/Sydney",
-];
+export const TIMEZONE_OPTIONS: string[] = (() => {
+  try {
+    return Intl.supportedValuesOf("timeZone");
+  } catch {
+    return [
+      "UTC",
+      "America/Los_Angeles",
+      "America/Denver",
+      "America/Chicago",
+      "America/New_York",
+      "America/Sao_Paulo",
+      "Europe/London",
+      "Europe/Berlin",
+      "Europe/Paris",
+      "Africa/Johannesburg",
+      "Asia/Dubai",
+      "Asia/Kolkata",
+      "Asia/Singapore",
+      "Asia/Tokyo",
+      "Australia/Sydney",
+    ];
+  }
+})();

@@ -239,64 +239,127 @@ async function findExisting(
  * Mocked metadata used as a graceful fallback when the user wants to try
  * the sync pipeline without a real OpenMetadata server (or when the server
  * isn't reachable from the browser due to CORS).
+ *
+ * 12 assets covering the full trust spectrum — from pristine to critical.
  */
 const MOCK_TABLES: OmTable[] = [
   {
-    id: "mock-orders",
-    name: "orders",
-    fullyQualifiedName: "warehouse.public.orders",
+    id: "mock-revenue-warehouse",
+    name: "revenue_warehouse",
+    fullyQualifiedName: "snowflake.analytics.revenue_warehouse",
     service: "Snowflake",
-    owner: "Data Platform",
+    owner: "Data Engineering",
     description:
-      "Customer order facts at line-item grain, joined with payments and shipping. Powers daily revenue reporting.",
-    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      "Consolidated revenue facts joined across orders, payments, refunds, and subscriptions. Primary source for exec-level P&L reporting. Refreshed every 4 hours via dbt.",
+    updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: "mock-customers",
-    name: "customers",
-    fullyQualifiedName: "warehouse.public.customers",
-    service: "Snowflake",
-    owner: "CRM Team",
-    description:
-      "Master customer profile per identity, stitched from web, app, and support sources.",
-    updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "mock-events",
-    name: "product_events",
-    fullyQualifiedName: "analytics.events.product_events",
+    id: "mock-customer-events",
+    name: "customer_events",
+    fullyQualifiedName: "bigquery.events.customer_events",
     service: "BigQuery",
     owner: "Growth Analytics",
     description:
-      "Streamed product events from web and mobile SDKs at session grain.",
-    updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      "Streamed customer lifecycle events (signup, activate, churn) from web and mobile SDKs. Schema drift on user_id column detected in last deploy.",
+    updatedAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: "mock-marketing",
-    name: "ad_spend_daily",
-    fullyQualifiedName: "marketing.reporting.ad_spend_daily",
+    id: "mock-inventory-live-feed",
+    name: "inventory_live_feed",
+    fullyQualifiedName: "databricks.ops.inventory_live_feed",
+    service: "Databricks",
+    owner: "Operations",
+    description:
+      "Real-time SKU-level inventory positions streamed from warehouse RFID sensors at 15-minute intervals. Downstream of inventory_snapshot materialization.",
+    updatedAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-supplier-sync-feed",
+    name: "supplier_sync_feed",
+    fullyQualifiedName: "postgres.procurement.supplier_sync_feed",
+    service: "Postgres",
+    owner: "Procurement",
+    description:
+      "Daily feed of supplier prices, lead times, and availability windows synced from third-party EDI integration.",
+    updatedAt: new Date(Date.now() - 22 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-finance-backup-raw",
+    name: "finance_backup_raw",
+    fullyQualifiedName: "postgres.finance.finance_backup_raw",
+    service: "Postgres",
+    owner: "",
+    description: "",
+    updatedAt: new Date(Date.now() - 48 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-user-profiles-master",
+    name: "user_profiles_master",
+    fullyQualifiedName: "snowflake.identity.user_profiles_master",
+    service: "Snowflake",
+    owner: "Identity Engineering",
+    description:
+      "Authoritative user profile master combining CRM, product, and support data. PII fields encrypted at rest. Used for personalization and compliance reporting.",
+    updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-payment-transactions",
+    name: "payment_transactions",
+    fullyQualifiedName: "snowflake.finance.payment_transactions",
+    service: "Snowflake",
+    owner: "Finance Engineering",
+    description:
+      "Immutable ledger of all payment events including charges, refunds, and disputes. Feeds into revenue_warehouse and regulatory reporting. PCI-DSS scoped.",
+    updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-product-catalog",
+    name: "product_catalog",
+    fullyQualifiedName: "snowflake.commerce.product_catalog",
+    service: "Snowflake",
+    owner: "Product Data",
+    description:
+      "Dimensional table of all active and archived SKUs with pricing tiers, category taxonomy, and availability flags. Refreshed nightly from the PIM system.",
+    updatedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-session-replay-events",
+    name: "session_replay_events",
+    fullyQualifiedName: "bigquery.analytics.session_replay_events",
+    service: "BigQuery",
+    owner: "Analytics Platform",
+    description:
+      "Compressed session replay payload events for heatmap and funnel analysis. Retention capped at 90 days. High volume — partitioned by day.",
+    updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-marketing-attribution",
+    name: "marketing_attribution",
+    fullyQualifiedName: "redshift.marketing.marketing_attribution",
     service: "Redshift",
     owner: "",
     description: "",
-    updatedAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 19 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: "mock-inventory",
-    name: "inventory_snapshot",
-    fullyQualifiedName: "ops.warehouse.inventory_snapshot",
-    service: "Databricks",
-    owner: "Operations",
-    description: "SKU-level stock positions snapshot taken every 15 minutes.",
-    updatedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "mock-finance",
-    name: "ledger_nightly",
-    fullyQualifiedName: "finance.archive.ledger_nightly",
+    id: "mock-support-tickets-raw",
+    name: "support_tickets_raw",
+    fullyQualifiedName: "postgres.support.support_tickets_raw",
     service: "Postgres",
-    owner: "Unassigned",
-    description: "Nightly finance ledger backup retained for audit.",
-    updatedAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+    owner: "Support Ops",
+    description:
+      "Raw ticket payloads from Zendesk webhook. Not cleaned or deduplicated — use support_tickets_clean for analysis.",
+    updatedAt: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-campaign-spend-daily",
+    name: "campaign_spend_daily",
+    fullyQualifiedName: "redshift.marketing.campaign_spend_daily",
+    service: "Redshift",
+    owner: "Marketing Analytics",
+    description:
+      "Daily aggregated ad spend by campaign and channel pulled from Google Ads, Meta, and LinkedIn APIs.",
+    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ];
 

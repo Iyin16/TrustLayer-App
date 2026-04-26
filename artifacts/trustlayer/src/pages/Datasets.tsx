@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Plus,
-  Upload,
   Database,
   ShieldCheck,
   AlertTriangle,
@@ -296,12 +295,9 @@ export default function Datasets() {
         }
         actions={
           !isDemo ? (
-            <>
-              <GhostButton icon={Upload}>Import schema</GhostButton>
-              <Link href="/dashboard">
-                <EmberButton icon={Plus}>New dataset</EmberButton>
-              </Link>
-            </>
+            <Link href="/dashboard">
+              <EmberButton icon={Plus}>New dataset</EmberButton>
+            </Link>
           ) : null
         }
       />

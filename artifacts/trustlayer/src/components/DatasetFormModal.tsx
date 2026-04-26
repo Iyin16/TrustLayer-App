@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { X, Database, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { X, Database, Loader2, ShieldCheck, Lock } from "lucide-react";
+import { computeLocalTrustScore } from "../lib/datasets";
 
 const SOURCES = ["Snowflake", "BigQuery", "Postgres", "Redshift", "Databricks"] as const;
 
@@ -7,7 +8,6 @@ export type DatasetFormValues = {
   name: string;
   owner: string;
   source: string;
-  trust_score: number;
   description: string;
   issue_reason: string;
 };
@@ -32,7 +32,6 @@ export function DatasetFormModal({
   const [name, setName] = useState("");
   const [source, setSource] = useState<string>(SOURCES[0]);
   const [owner, setOwner] = useState("");
-  const [trustScore, setTrustScore] = useState<number>(75);
   const [description, setDescription] = useState("");
   const [issueReason, setIssueReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -45,9 +44,6 @@ export function DatasetFormModal({
     setName(initial?.name ?? "");
     setSource(initial?.source ?? SOURCES[0]);
     setOwner(initial?.owner ?? defaultOwner ?? "");
-    setTrustScore(
-      typeof initial?.trust_score === "number" ? initial.trust_score : 75,
-    );
     setDescription(initial?.description ?? "");
     setIssueReason(initial?.issue_reason ?? "");
   }, [open, initial, defaultOwner]);
@@ -61,14 +57,24 @@ export function DatasetFormModal({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  const preview = useMemo(
+    () =>
+      computeLocalTrustScore({
+        name: name.trim().replace(/\s+/g, "_"),
+        owner: owner.trim(),
+        source,
+        description: description.trim(),
+        issue_reason: issueReason.trim(),
+      }),
+    [name, owner, source, description, issueReason],
+  );
+
   if (!open) return null;
 
-  const previewStatus =
-    trustScore >= 80 ? "Healthy" : trustScore >= 60 ? "Warning" : "At Risk";
   const previewColor =
-    previewStatus === "Healthy"
+    preview.status === "Healthy"
       ? "text-[#34d399] bg-[rgba(52,211,153,0.10)] border-[rgba(52,211,153,0.28)]"
-      : previewStatus === "Warning"
+      : preview.status === "Warning"
         ? "text-[#fbbf24] bg-[rgba(251,191,36,0.10)] border-[rgba(251,191,36,0.28)]"
         : "text-[#f87171] bg-[rgba(248,113,113,0.10)] border-[rgba(248,113,113,0.28)]";
 
@@ -91,7 +97,6 @@ export function DatasetFormModal({
         name: cleanName.replace(/\s+/g, "_"),
         owner: cleanOwner,
         source,
-        trust_score: Math.max(0, Math.min(100, Math.round(trustScore))),
         description: cleanDescription,
         issue_reason: cleanIssue,
       });
@@ -178,36 +183,6 @@ export function DatasetFormModal({
             </Field>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="text-[10.5px] font-semibold tracking-[0.14em] uppercase text-[#5a5a63]">
-                Trust score
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-semibold text-white tabular-nums w-8 text-right">
-                  {trustScore}
-                </span>
-                <span
-                  className={[
-                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-medium border",
-                    previewColor,
-                  ].join(" ")}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                  {previewStatus}
-                </span>
-              </div>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={trustScore}
-              onChange={(e) => setTrustScore(Number(e.target.value))}
-              className="w-full accent-[#ff4d2e] h-2"
-            />
-          </div>
-
           <Field label="Description">
             <textarea
               required
@@ -228,6 +203,35 @@ export function DatasetFormModal({
               className="w-full bg-transparent outline-none text-[13.5px] text-white placeholder:text-[#5a5a63] resize-none py-2"
             />
           </Field>
+
+          <div className="rounded-xl border border-[#1f1f24] bg-[#0a0a0d] px-3.5 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.14em] uppercase text-[#5a5a63]">
+                <Lock className="h-3 w-3" />
+                Trust score · auto-calculated
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-[#ff7a59]" />
+                <span className="text-[15px] font-semibold text-white tabular-nums">
+                  {preview.score}
+                </span>
+                <span
+                  className={[
+                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-medium border",
+                    previewColor,
+                  ].join(" ")}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                  {preview.status}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 text-[11.5px] text-[#a1a1aa] leading-relaxed">
+              {preview.reasons.length === 0
+                ? "All metadata fields look good — owner, description, and source are present."
+                : `Penalties: ${preview.reasons.join(", ")}.`}
+            </div>
+          </div>
 
           {error && (
             <div className="rounded-lg border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.08)] px-3 py-2 text-[12px] text-[#fca5a5]">

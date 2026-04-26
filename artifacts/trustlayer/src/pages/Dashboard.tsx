@@ -140,7 +140,7 @@ export default function Dashboard() {
   async function handleUpdate(values: DatasetFormValues) {
     if (modal.mode !== "edit") return;
     const id = modal.doc.$id;
-    const updated = await updateDataset(id, values);
+    const updated = await updateDataset(id, modal.doc, values);
     setDocs((prev) => prev.map((d) => (d.$id === id ? updated : d)));
     setModal({ mode: "closed" });
   }
@@ -247,7 +247,6 @@ export default function Dashboard() {
                 name: modal.doc.name,
                 source: modal.doc.source,
                 owner: modal.doc.owner,
-                trust_score: modal.doc.trust_score,
                 description: modal.doc.description,
                 issue_reason: modal.doc.issue_reason,
               }

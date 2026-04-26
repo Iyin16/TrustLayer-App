@@ -17,7 +17,13 @@ import { DatasetFormModal, type DatasetFormValues } from "../components/DatasetF
 import { OpenMetadataModal } from "../components/OpenMetadataModal";
 import { useAuth } from "../lib/auth";
 import { useWorkspace } from "../lib/workspace";
-import { datasets as demoDatasets, type Dataset } from "../lib/data";
+import {
+  datasets as demoDatasets,
+  DEMO_WORKSPACE_NAME,
+  DEMO_WORKSPACE_INDUSTRY,
+  DEMO_WORKSPACE_TAGLINE,
+  type Dataset,
+} from "../lib/data";
 import {
   createDataset,
   docToDataset,
@@ -139,7 +145,7 @@ export default function Dashboard() {
   }
 
   const headerDescription = isDemo
-    ? `Exploring the demo workspace · ${counts.total} sample dataset${counts.total === 1 ? "" : "s"}.`
+    ? `Exploring the ${DEMO_WORKSPACE_NAME} demo · ${counts.total} sample dataset${counts.total === 1 ? "" : "s"} across the commerce stack.`
     : counts.total === 0
       ? "You don't have any datasets yet. Add one to get started."
       : `Here's the trust state of your ${counts.total} dataset${counts.total === 1 ? "" : "s"}.`;
@@ -147,7 +153,7 @@ export default function Dashboard() {
   return (
     <>
       <PageHeader
-        eyebrow={isDemo ? "Demo Workspace" : "Workspace Overview"}
+        eyebrow={isDemo ? `Demo · ${DEMO_WORKSPACE_INDUSTRY}` : "Workspace Overview"}
         title="Good morning,"
         highlight={greetingName}
         description={headerDescription}
@@ -220,11 +226,14 @@ function DemoBanner() {
       </span>
       <div className="relative flex-1 min-w-0">
         <div className="text-[12.5px] font-semibold text-white">
-          You're exploring the Demo Workspace
+          {DEMO_WORKSPACE_NAME}
+          <span className="ml-2 text-[10.5px] font-medium uppercase tracking-[0.16em] text-[#ff7a59]">
+            Demo · {DEMO_WORKSPACE_INDUSTRY}
+          </span>
         </div>
         <div className="text-[11.5px] text-[#a1a1aa]">
-          Sample data is read-only. Switch to Your Workspace from the sidebar to add and
-          edit datasets.
+          {DEMO_WORKSPACE_TAGLINE} Sample data is read-only — switch to Your Workspace to
+          add or edit datasets.
         </div>
       </div>
     </div>

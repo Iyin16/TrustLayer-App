@@ -14,6 +14,7 @@ import {
 import { useAuth, userInitials } from "../lib/auth";
 import { useWorkspace } from "../lib/workspace";
 import { OpenMetadataModal } from "../components/OpenMetadataModal";
+import { DEMO_WORKSPACE_NAME, DEMO_WORKSPACE_INDUSTRY } from "../lib/data";
 
 export default function Onboarding() {
   const { user } = useAuth();
@@ -81,13 +82,13 @@ export default function Onboarding() {
           <ChoiceCard
             badge="Recommended"
             icon={Sparkles}
-            title="Explore Demo Workspace"
-            description="Loaded with realistic enterprise datasets, trust scores, alerts, lineage, and analytics so you can see TrustLayer in action immediately."
+            title={`Explore ${DEMO_WORKSPACE_NAME}`}
+            description={`A live ${DEMO_WORKSPACE_INDUSTRY.toLowerCase()} demo workspace with 8 datasets, real owners, freshness signals, alerts, lineage, and analytics so you can see TrustLayer in action immediately.`}
             features={[
-              { icon: Database, label: "7 sample datasets across 5 sources" },
-              { icon: ShieldCheck, label: "Pre-computed trust scores & alerts" },
-              { icon: GitBranch, label: "Lineage and dependency graph" },
-              { icon: Activity, label: "Quality test history" },
+              { icon: Database, label: "8 commerce datasets across Snowflake, BigQuery, Redshift, Databricks, Postgres" },
+              { icon: ShieldCheck, label: "Pre-computed trust scores, alerts, freshness signals" },
+              { icon: GitBranch, label: "End-to-end lineage from raw sources to dashboards" },
+              { icon: Activity, label: "Quality test history per dataset" },
             ]}
             primary={{
               label: "Explore demo",

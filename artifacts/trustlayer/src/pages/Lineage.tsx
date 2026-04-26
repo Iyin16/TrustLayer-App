@@ -20,10 +20,10 @@ import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout
 import { KpiCards, type Kpi } from "../components/KpiCards";
 
 const kpis: Kpi[] = [
-  { label: "Tracked Pipelines", value: "27", delta: "across 4 warehouses", icon: Workflow, tone: "ember" },
-  { label: "Upstream Sources", value: "12", delta: "raw + ingested", icon: Layers, tone: "success" },
-  { label: "Downstream Consumers", value: "48", delta: "dashboards · models · APIs", icon: Network, tone: "warning" },
-  { label: "Broken Links", value: "2", delta: "needs attention", icon: GitBranch, tone: "danger" },
+  { label: "Tracked Pipelines", value: "24", delta: "Shopify · Stripe · Segment · Ads · IoT", icon: Workflow, tone: "ember" },
+  { label: "Upstream Sources", value: "8", delta: "raw + ingested", icon: Layers, tone: "success" },
+  { label: "Downstream Consumers", value: "8", delta: "dashboards · CRM · alerts", icon: Network, tone: "warning" },
+  { label: "Broken Links", value: "3", delta: "supplier EDI · Meta Ads · legacy ERP", icon: GitBranch, tone: "danger" },
 ];
 
 type NodeKind = "source" | "transform" | "consumer";
@@ -43,39 +43,68 @@ type GraphNode = {
   rows?: string;
 };
 
+const NODE_W = 200;
+const NODE_H = 64;
+const COL_X = { source: 60, transform: 380, consumer: 720 } as const;
+const ROW_Y = [60, 144, 228, 312, 396, 480, 564, 648];
+
 const nodes: GraphNode[] = [
-  { id: "stripe", label: "stripe_raw", sub: "API · finance", kind: "source", health: "healthy", x: 60, y: 60, owner: "Aisha Rahman", lastRun: "8 min ago", rows: "2.4M" },
-  { id: "segment", label: "segment_events", sub: "Stream · growth", kind: "source", health: "healthy", x: 60, y: 200, owner: "Marcus Chen", lastRun: "2 min ago", rows: "18.1M" },
-  { id: "hubspot", label: "hubspot_export", sub: "Sync · marketing", kind: "source", health: "warning", x: 60, y: 340, owner: "Diego Alvarez", lastRun: "4 hr ago", rows: "412K" },
-  { id: "oracle", label: "legacy_oracle", sub: "JDBC · legacy", kind: "source", health: "risk", x: 60, y: 480, owner: "Owen Brooks", lastRun: "2 days ago", rows: "84K" },
+  // SOURCES
+  { id: "shopify", label: "shopify_orders_raw", sub: "API · commerce", kind: "source", health: "healthy", x: COL_X.source, y: ROW_Y[0], owner: "Priya Shah", lastRun: "3 min ago", rows: "142M" },
+  { id: "stripe", label: "stripe_payments_raw", sub: "API · finance", kind: "source", health: "healthy", x: COL_X.source, y: ROW_Y[1], owner: "Priya Shah", lastRun: "4 min ago", rows: "98M" },
+  { id: "segment", label: "segment_events_raw", sub: "Stream · growth", kind: "source", health: "healthy", x: COL_X.source, y: ROW_Y[2], owner: "Marcus Chen", lastRun: "2 min ago", rows: "968M" },
+  { id: "google_ads", label: "google_ads_raw", sub: "Sync · marketing", kind: "source", health: "warning", x: COL_X.source, y: ROW_Y[3], owner: "Diego Alvarez", lastRun: "1 hr ago", rows: "1.4M" },
+  { id: "meta_ads", label: "meta_ads_raw", sub: "Sync · marketing", kind: "source", health: "warning", x: COL_X.source, y: ROW_Y[4], owner: "Diego Alvarez", lastRun: "9 hr ago", rows: "0.9M" },
+  { id: "warehouse_iot", label: "warehouse_iot_raw", sub: "Stream · ops", kind: "source", health: "healthy", x: COL_X.source, y: ROW_Y[5], owner: "Yuki Tanaka", lastRun: "30 sec ago", rows: "24.8M" },
+  { id: "legacy_oracle", label: "legacy_oracle_raw", sub: "JDBC · legacy ERP", kind: "source", health: "risk", x: COL_X.source, y: ROW_Y[6], owner: "Owen Brooks", lastRun: "3 days ago", rows: "6.4M" },
+  { id: "supplier_edi", label: "supplier_edi_raw", sub: "EDI · supply chain", kind: "source", health: "risk", x: COL_X.source, y: ROW_Y[7], owner: "Jordan Reed", lastRun: "14 hr ago", rows: "820K" },
 
-  { id: "ledger", label: "finance_ledger", sub: "dbt model", kind: "transform", health: "healthy", x: 380, y: 60, trust: 96, owner: "Aisha Rahman", lastRun: "8 min ago", rows: "2.4M" },
-  { id: "events", label: "customer_events", sub: "dbt model", kind: "transform", health: "healthy", x: 380, y: 200, trust: 89, owner: "Marcus Chen", lastRun: "32 min ago", rows: "18.1M" },
-  { id: "attrib", label: "marketing_attribution", sub: "dbt model", kind: "transform", health: "warning", x: 380, y: 340, trust: 71, owner: "Diego Alvarez", lastRun: "2 hr ago", rows: "412K" },
-  { id: "legacy", label: "legacy_invoices", sub: "dbt model", kind: "transform", health: "risk", x: 380, y: 480, trust: 41, owner: "Owen Brooks", lastRun: "2 days ago", rows: "84K" },
+  // TRANSFORMS (the 8 NovaMart datasets)
+  { id: "revenue", label: "revenue_warehouse", sub: "dbt model · finance", kind: "transform", health: "healthy", x: COL_X.transform, y: ROW_Y[0], trust: 94, owner: "Priya Shah", lastRun: "4 min ago", rows: "142.6M" },
+  { id: "returns", label: "returns_dashboard_source", sub: "dbt model · customer", kind: "transform", health: "healthy", x: COL_X.transform, y: ROW_Y[1], trust: 82, owner: "Aisha Rahman", lastRun: "25 min ago", rows: "11.7M" },
+  { id: "events", label: "customer_events", sub: "dbt model · growth", kind: "transform", health: "warning", x: COL_X.transform, y: ROW_Y[2], trust: 76, owner: "Marcus Chen", lastRun: "18 min ago", rows: "968.4M" },
+  { id: "profiles", label: "user_profiles_master", sub: "dbt model · customer", kind: "transform", health: "healthy", x: COL_X.transform, y: ROW_Y[3], trust: 91, owner: "Emma Larsson", lastRun: "12 min ago", rows: "38.2M" },
+  { id: "ads", label: "ad_spend_reporting", sub: "dbt model · marketing", kind: "transform", health: "warning", x: COL_X.transform, y: ROW_Y[4], trust: 67, owner: "Diego Alvarez", lastRun: "3 hr ago", rows: "4.2M" },
+  { id: "inventory", label: "inventory_live_feed", sub: "streaming · ops", kind: "transform", health: "healthy", x: COL_X.transform, y: ROW_Y[5], trust: 88, owner: "Yuki Tanaka", lastRun: "90 sec ago", rows: "24.8M" },
+  { id: "finance_bk", label: "finance_backup_raw", sub: "raw extract · finance", kind: "transform", health: "risk", x: COL_X.transform, y: ROW_Y[6], trust: 43, owner: "Owen Brooks", lastRun: "3 days ago", rows: "6.4M" },
+  { id: "supplier", label: "supplier_sync_feed", sub: "raw EDI · supply chain", kind: "transform", health: "risk", x: COL_X.transform, y: ROW_Y[7], trust: 58, owner: "Jordan Reed", lastRun: "14 hr ago", rows: "820K" },
 
-  { id: "exec", label: "Executive Dashboard", sub: "Looker", kind: "consumer", health: "healthy", x: 720, y: 100 },
-  { id: "growth", label: "Growth Funnel", sub: "Mode", kind: "consumer", health: "healthy", x: 720, y: 240 },
-  { id: "campaign", label: "Campaign ROI", sub: "Tableau", kind: "consumer", health: "warning", x: 720, y: 380 },
-  { id: "ar", label: "AR Aging Report", sub: "Email digest", kind: "consumer", health: "risk", x: 720, y: 500 },
+  // CONSUMERS
+  { id: "exec", label: "Executive Dashboard", sub: "Looker", kind: "consumer", health: "healthy", x: COL_X.consumer, y: ROW_Y[0] },
+  { id: "cx", label: "CX & Returns", sub: "Looker", kind: "consumer", health: "healthy", x: COL_X.consumer, y: ROW_Y[1] },
+  { id: "growth", label: "Growth Funnel", sub: "Mode", kind: "consumer", health: "warning", x: COL_X.consumer, y: ROW_Y[2] },
+  { id: "crm", label: "Lifecycle CRM", sub: "Braze", kind: "consumer", health: "healthy", x: COL_X.consumer, y: ROW_Y[3] },
+  { id: "marketing_roi", label: "Marketing ROI", sub: "Tableau", kind: "consumer", health: "warning", x: COL_X.consumer, y: ROW_Y[4] },
+  { id: "ops_command", label: "Ops Command", sub: "Tableau", kind: "consumer", health: "healthy", x: COL_X.consumer, y: ROW_Y[5] },
+  { id: "finance_close", label: "Finance Close", sub: "Email digest", kind: "consumer", health: "risk", x: COL_X.consumer, y: ROW_Y[6] },
+  { id: "procurement", label: "Procurement Alerts", sub: "Slack", kind: "consumer", health: "risk", x: COL_X.consumer, y: ROW_Y[7] },
 ];
 
 const edges: Array<[string, string]> = [
-  ["stripe", "ledger"],
+  // raw → models
+  ["shopify", "revenue"],
+  ["stripe", "revenue"],
+  ["shopify", "returns"],
   ["segment", "events"],
-  ["hubspot", "attrib"],
-  ["oracle", "legacy"],
-  ["ledger", "exec"],
+  ["segment", "profiles"],
+  ["google_ads", "ads"],
+  ["meta_ads", "ads"],
+  ["warehouse_iot", "inventory"],
+  ["legacy_oracle", "finance_bk"],
+  ["supplier_edi", "supplier"],
+  // models → consumers
+  ["revenue", "exec"],
+  ["returns", "cx"],
   ["events", "growth"],
-  ["events", "campaign"],
-  ["attrib", "campaign"],
-  ["legacy", "ar"],
+  ["profiles", "crm"],
+  ["ads", "marketing_roi"],
+  ["inventory", "ops_command"],
+  ["finance_bk", "finance_close"],
+  ["supplier", "procurement"],
 ];
 
 const W = 880;
-const H = 580;
-const NODE_W = 200;
-const NODE_H = 64;
+const H = 720;
 
 function healthDot(h: Health) {
   if (h === "healthy") return { dot: "bg-[#34d399] shadow-[0_0_8px_rgba(52,211,153,0.7)]", text: "text-[#34d399]", label: "Healthy", icon: CheckCircle2 };
@@ -98,7 +127,7 @@ const ZOOM_MAX = 1.6;
 const ZOOM_STEP = 0.15;
 
 export default function Lineage() {
-  const [selectedId, setSelectedId] = useState<string>("attrib");
+  const [selectedId, setSelectedId] = useState<string>("revenue");
   const [zoom, setZoom] = useState(1);
   const zoomIn = () => setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)));
   const zoomOut = () => setZoom((z) => Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2)));
@@ -129,7 +158,7 @@ export default function Lineage() {
           <div className="px-6 pt-6 pb-4 flex items-end justify-between gap-4 flex-wrap border-b border-[#16161a]">
             <div>
               <h2 className="text-[18px] font-semibold tracking-tight">Mission control</h2>
-              <p className="mt-1 text-[12.5px] text-[#a1a1aa]">12 sources · 8 transforms · 4 consumers</p>
+              <p className="mt-1 text-[12.5px] text-[#a1a1aa]">8 sources · 8 datasets · 8 consumers</p>
             </div>
             <div className="flex items-center gap-3 text-[11px] text-[#a1a1aa]">
               <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#34d399] shadow-[0_0_6px_rgba(52,211,153,0.7)]" />Healthy</span>

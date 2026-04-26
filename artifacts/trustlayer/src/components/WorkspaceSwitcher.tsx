@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, Database, Check, ChevronDown, Network, RotateCcw } from "lucide-react";
 import { useWorkspace, type WorkspaceMode } from "../lib/workspace";
+import { DEMO_WORKSPACE_NAME } from "../lib/data";
 import { OpenMetadataModal } from "./OpenMetadataModal";
 
 const LABELS: Record<WorkspaceMode, { label: string; sub: string }> = {
-  demo: { label: "Demo Workspace", sub: "Sample enterprise data" },
+  demo: { label: DEMO_WORKSPACE_NAME, sub: "Demo · Ecommerce / Retail" },
   user: { label: "Your Workspace", sub: "Private to you" },
 };
 
@@ -62,8 +63,8 @@ export function WorkspaceSwitcher() {
         <div className="absolute left-0 right-0 top-[calc(100%+6px)] rounded-xl border border-[#1f1f24] bg-[#0d0d10] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] overflow-hidden z-30">
           <Option
             icon={Sparkles}
-            label="Demo Workspace"
-            description="Realistic enterprise sample data"
+            label={DEMO_WORKSPACE_NAME}
+            description="Demo · Ecommerce sample data"
             active={mode === "demo"}
             tone="ember"
             onClick={() => {

@@ -9,6 +9,15 @@ import {
   CheckCircle2,
   Loader2,
   Mail,
+  Lock,
+  Key,
+  Eye,
+  EyeOff,
+  Copy,
+  RefreshCw,
+  Monitor,
+  Smartphone,
+  Shield,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton, Card } from "../components/Layout";
 import { OpenMetadataModal } from "../components/OpenMetadataModal";
@@ -18,9 +27,11 @@ import {
   loadOrCreateProfile,
   updateProfile,
   clampThreshold,
+  generateApiToken,
   TIMEZONE_OPTIONS,
   type UserProfile,
 } from "../lib/profile";
+import { account } from "../lib/appwrite";
 
 function Field({
   label,
@@ -166,9 +177,15 @@ const ROLE_OPTIONS = [
   "Other",
 ];
 
+const MOCK_DEVICES = [
+  { id: "dev-1", name: "Chrome on macOS", type: "desktop", current: true, lastSeen: "Active now" },
+  { id: "dev-2", name: "Safari on iPhone", type: "mobile", current: false, lastSeen: "2 days ago" },
+];
+
 export default function Settings() {
   const { user, refresh } = useAuth();
   const { openMetadata, disconnectOpenMetadata } = useWorkspace();
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [draft, setDraft] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -177,9 +194,21 @@ export default function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [omOpen, setOmOpen] = useState(false);
 
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSending, setResetSending] = useState(false);
+  const [resetInfo, setResetInfo] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  const [tokenVisible, setTokenVisible] = useState(false);
+  const [tokenGenerating, setTokenGenerating] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [confirmRegen, setConfirmRegen] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
     if (!user) return;
+    setResetEmail(user.email ?? "");
     setLoading(true);
     loadOrCreateProfile(user)
       .then((p) => {
@@ -226,8 +255,6 @@ export default function Settings() {
       setProfile(next);
       setDraft(next);
       setSavedAt(Date.now());
-      // Pull the updated user (esp. if full_name was synced to account.name)
-      // so the header avatar reflects the change.
       await refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Couldn't save changes.";
@@ -243,12 +270,62 @@ export default function Settings() {
     setError(null);
   }
 
+  async function handlePasswordReset() {
+    if (!user) return;
+    setResetSending(true);
+    setResetInfo(null);
+    setResetError(null);
+    try {
+      const url = `${window.location.origin}${import.meta.env.BASE_URL}`;
+      await account.createRecovery(resetEmail.trim(), url);
+      setResetInfo("Password reset link sent. Check your inbox — it may take a minute.");
+    } catch (err: unknown) {
+      setResetError(err instanceof Error ? err.message : "Couldn't send reset email.");
+    } finally {
+      setResetSending(false);
+    }
+  }
+
+  async function handleGenerateToken(force = false) {
+    if (!user) return;
+    if (profile?.api_token && !force) {
+      setConfirmRegen(true);
+      return;
+    }
+    setConfirmRegen(false);
+    setTokenGenerating(true);
+    setTokenError(null);
+    try {
+      const token = generateApiToken();
+      const next = await updateProfile(user, { ...draft!, api_token: token });
+      setProfile(next);
+      setDraft(next);
+      setTokenVisible(true);
+    } catch (err: unknown) {
+      setTokenError(err instanceof Error ? err.message : "Couldn't save token.");
+    } finally {
+      setTokenGenerating(false);
+    }
+  }
+
+  function handleCopyToken() {
+    if (!profile?.api_token) return;
+    navigator.clipboard.writeText(profile.api_token).then(() => {
+      setTokenCopied(true);
+      setTimeout(() => setTokenCopied(false), 2000);
+    });
+  }
+
+  const maskedToken = profile?.api_token
+    ? profile.api_token.slice(0, 7) + "••••••••••••••••••••••••••••••••••••••••••••••••••••••••"
+    : null;
+
   return (
     <>
       <PageHeader
         eyebrow="Workspace"
         title="Settings"
-        description="Manage your profile, notifications, and integrations."
+        description="Manage your profile, notifications, integrations, and security."
         actions={
           <>
             <GhostButton onClick={handleDiscard}>Discard</GhostButton>
@@ -272,6 +349,7 @@ export default function Settings() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* ── Profile ─────────────────────────────────────────────────── */}
         <SectionCard
           icon={User}
           title="Profile"
@@ -312,6 +390,7 @@ export default function Settings() {
           )}
         </SectionCard>
 
+        {/* ── Organization ────────────────────────────────────────────── */}
         <SectionCard
           icon={Building2}
           title="Organization"
@@ -333,6 +412,7 @@ export default function Settings() {
           </div>
         </SectionCard>
 
+        {/* ── Notifications ────────────────────────────────────────────── */}
         <SectionCard
           icon={Bell}
           title="Notifications"
@@ -347,12 +427,9 @@ export default function Settings() {
           <div className="pt-4">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <div className="text-[13px] font-medium text-white">
-                  Risk threshold
-                </div>
+                <div className="text-[13px] font-medium text-white">Risk threshold</div>
                 <div className="text-[12px] text-[#a1a1aa]">
-                  Alert when a dataset's trust score drops by more than this
-                  many points.
+                  Alert when a dataset's trust score drops by more than this many points.
                 </div>
               </div>
               <span className="text-[15px] font-semibold text-white tabular-nums">
@@ -378,12 +455,241 @@ export default function Settings() {
           <div className="mt-4 rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-3 py-2.5 text-[11.5px] text-[#a1a1aa] flex items-start gap-2">
             <Mail className="h-3.5 w-3.5 mt-0.5 text-[#ff7a59] shrink-0" />
             <span>
-              Preferences are stored in your Appwrite account. Delivery is
-              configured separately when notification channels are connected.
+              Preferences are stored in your Appwrite account. Delivery is configured
+              separately when notification channels are connected.
             </span>
           </div>
         </SectionCard>
 
+        {/* ── Security ─────────────────────────────────────────────────── */}
+        <SectionCard
+          icon={Lock}
+          title="Security"
+          description="Manage your password, sessions, and trusted devices."
+        >
+          {/* Current session */}
+          <div className="mb-5">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5a5a63] mb-3">
+              Current session
+            </div>
+            <div className="rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-4 py-3 flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-[rgba(255,106,31,0.08)] ring-1 ring-[rgba(255,106,31,0.18)] flex items-center justify-center shrink-0">
+                <Shield className="h-4 w-4 text-[#ff7a59]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium text-white truncate">
+                  {user?.email ?? "—"}
+                </div>
+                <div className="text-[11.5px] text-[#5a5a63] mt-0.5">
+                  Account ID: {user?.$id?.slice(0, 16) ?? "—"}…
+                </div>
+              </div>
+              <span className="shrink-0 text-[10.5px] font-semibold px-2 py-1 rounded-full bg-[rgba(52,211,153,0.1)] text-[#34d399] ring-1 ring-[rgba(52,211,153,0.2)]">
+                Active
+              </span>
+            </div>
+          </div>
+
+          {/* Password reset */}
+          <div className="mb-5 border-t border-[#101014] pt-5">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5a5a63] mb-3">
+              Password reset
+            </div>
+            <div className="space-y-3">
+              <Field
+                label="Send reset link to"
+                value={resetEmail}
+                type="email"
+                onChange={setResetEmail}
+                placeholder="you@company.com"
+              />
+              {resetInfo && (
+                <div className="flex items-start gap-2 rounded-lg border border-[rgba(52,211,153,0.25)] bg-[rgba(52,211,153,0.06)] px-3 py-2 text-[12px] text-[#86efac]">
+                  <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>{resetInfo}</span>
+                </div>
+              )}
+              {resetError && (
+                <div className="rounded-lg border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.08)] px-3 py-2 text-[12px] text-[#fca5a5]">
+                  {resetError}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => void handlePasswordReset()}
+                disabled={resetSending || !resetEmail.trim()}
+                className="h-9 px-4 rounded-lg border border-[#2a2a30] bg-[#0d0d10] hover:bg-[#16161a] text-[12.5px] font-medium text-white transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resetSending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Mail className="h-3.5 w-3.5 text-[#ff7a59]" />
+                )}
+                {resetSending ? "Sending…" : "Send reset link"}
+              </button>
+            </div>
+          </div>
+
+          {/* Trusted devices */}
+          <div className="border-t border-[#101014] pt-5">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5a5a63] mb-3">
+              Trusted devices
+            </div>
+            <div className="space-y-2">
+              {MOCK_DEVICES.map((dev) => (
+                <div
+                  key={dev.id}
+                  className="rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-3.5 py-3 flex items-center gap-3"
+                >
+                  <div className="shrink-0 text-[#5a5a63]">
+                    {dev.type === "mobile" ? (
+                      <Smartphone className="h-4 w-4" />
+                    ) : (
+                      <Monitor className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium text-white">{dev.name}</div>
+                    <div className="text-[11.5px] text-[#5a5a63]">{dev.lastSeen}</div>
+                  </div>
+                  {dev.current ? (
+                    <span className="shrink-0 text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(52,211,153,0.1)] text-[#34d399] ring-1 ring-[rgba(52,211,153,0.2)]">
+                      This device
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="shrink-0 text-[11.5px] text-[#fca5a5] hover:text-[#f87171] transition-colors"
+                    >
+                      Revoke
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* ── API Tokens ───────────────────────────────────────────────── */}
+        <SectionCard
+          icon={Key}
+          title="API Tokens"
+          description="Generate a personal token to access the TrustLayer API."
+        >
+          {profile?.api_token ? (
+            <div className="space-y-4">
+              <div>
+                <div className="text-[12px] font-medium text-[#a8a8b3] mb-1.5">Your API token</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-10 px-3.5 rounded-lg bg-[#0d0d10] border border-[#1f1f24] text-[12px] text-white font-mono flex items-center overflow-hidden">
+                    <span className="truncate">
+                      {tokenVisible ? profile.api_token : maskedToken}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTokenVisible((v) => !v)}
+                    title={tokenVisible ? "Hide token" : "Reveal token"}
+                    className="h-10 w-10 rounded-lg border border-[#1f1f24] bg-[#0d0d10] hover:bg-[#16161a] flex items-center justify-center shrink-0 transition-colors"
+                  >
+                    {tokenVisible ? (
+                      <EyeOff className="h-4 w-4 text-[#a1a1aa]" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-[#a1a1aa]" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyToken}
+                    title="Copy token"
+                    className="h-10 w-10 rounded-lg border border-[#1f1f24] bg-[#0d0d10] hover:bg-[#16161a] flex items-center justify-center shrink-0 transition-colors"
+                  >
+                    {tokenCopied ? (
+                      <CheckCircle2 className="h-4 w-4 text-[#34d399]" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-[#a1a1aa]" />
+                    )}
+                  </button>
+                </div>
+                <div className="mt-1.5 text-[11px] text-[#5a5a63]">
+                  Treat this like a password — don't share it publicly.
+                </div>
+              </div>
+
+              {confirmRegen ? (
+                <div className="rounded-lg border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.06)] px-4 py-3 space-y-3">
+                  <div className="text-[12.5px] text-[#fca5a5]">
+                    Regenerating will invalidate your current token immediately. Any services using it will stop working.
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleGenerateToken(true)}
+                      disabled={tokenGenerating}
+                      className="h-8 px-3 rounded-lg bg-[rgba(248,113,113,0.15)] border border-[rgba(248,113,113,0.3)] text-[12px] font-medium text-[#fca5a5] hover:bg-[rgba(248,113,113,0.25)] transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {tokenGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                      Yes, regenerate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmRegen(false)}
+                      className="h-8 px-3 rounded-lg border border-[#2a2a30] bg-[#0d0d10] text-[12px] font-medium text-[#a1a1aa] hover:text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void handleGenerateToken(false)}
+                  disabled={tokenGenerating}
+                  className="h-9 px-4 rounded-lg border border-[#2a2a30] bg-[#0d0d10] hover:bg-[#16161a] text-[12.5px] font-medium text-[#a1a1aa] hover:text-white transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Regenerate token
+                </button>
+              )}
+
+              {tokenError && (
+                <div className="rounded-lg border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.08)] px-3 py-2 text-[12px] text-[#fca5a5]">
+                  {tokenError}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-4 py-4 text-center">
+                <Key className="h-6 w-6 text-[#3a3a40] mx-auto mb-2" />
+                <div className="text-[13px] font-medium text-[#a1a1aa]">No API token yet</div>
+                <div className="text-[12px] text-[#5a5a63] mt-0.5">
+                  Generate a token to authenticate API requests.
+                </div>
+              </div>
+              {tokenError && (
+                <div className="rounded-lg border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.08)] px-3 py-2 text-[12px] text-[#fca5a5]">
+                  {tokenError}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => void handleGenerateToken(true)}
+                disabled={tokenGenerating || loading}
+                className="w-full h-10 rounded-xl bg-gradient-to-b from-[#ff5a35] to-[#ff3a1c] text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-[0_8px_24px_-10px_rgba(255,77,46,0.6),inset_0_1px_0_0_rgba(255,255,255,0.15)] hover:brightness-110 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {tokenGenerating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Key className="h-4 w-4" />
+                )}
+                {tokenGenerating ? "Generating…" : "Generate API token"}
+              </button>
+            </div>
+          )}
+        </SectionCard>
+
+        {/* ── Integrations / OpenMetadata ──────────────────────────────── */}
         <SectionCard
           icon={Plug}
           title="Integrations"

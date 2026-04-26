@@ -439,7 +439,7 @@ export default function Settings() {
             <input
               type="range"
               min={1}
-              max={50}
+              max={5}
               value={draft?.risk_threshold ?? 5}
               onChange={(e) =>
                 patch("risk_threshold", clampThreshold(Number(e.target.value)))
@@ -448,8 +448,8 @@ export default function Settings() {
               className="w-full accent-[#ff4d2e] h-2 disabled:opacity-50"
             />
             <div className="mt-1 flex justify-between text-[10.5px] text-[#5a5a63]">
-              <span>1 pt</span>
-              <span>50 pts</span>
+              <span>1</span>
+              <span>5</span>
             </div>
           </div>
           <div className="mt-4 rounded-lg border border-[#1f1f24] bg-[#0a0a0d] px-3 py-2.5 text-[11.5px] text-[#a1a1aa] flex items-start gap-2">

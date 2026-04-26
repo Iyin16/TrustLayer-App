@@ -56,7 +56,7 @@ export function readProfileFromUser(
 
 export function clampThreshold(n: number): number {
   if (!Number.isFinite(n)) return 5;
-  return Math.max(1, Math.min(50, Math.round(n)));
+  return Math.max(1, Math.min(5, Math.round(n)));
 }
 
 export function generateApiToken(): string {

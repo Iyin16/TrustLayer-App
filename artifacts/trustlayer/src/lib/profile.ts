@@ -1,12 +1,6 @@
 import type { Models } from "appwrite";
 import { account } from "./appwrite";
 
-/**
- * User profile is persisted per-user in Appwrite as Account preferences
- * (the built-in `users_profile` store on the Account object). Using the
- * preferences API keeps profile data attached to the authenticated user
- * with no extra collection or permissions setup needed.
- */
 export type UserProfile = {
   full_name: string;
   role: string;
@@ -14,6 +8,7 @@ export type UserProfile = {
   timezone: string;
   notifications_enabled: boolean;
   risk_threshold: number;
+  api_token: string;
 };
 
 export const DEFAULT_PROFILE: UserProfile = {
@@ -23,6 +18,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   timezone: "",
   notifications_enabled: true,
   risk_threshold: 5,
+  api_token: "",
 };
 
 function pickString(v: unknown, fallback = ""): string {
@@ -54,6 +50,7 @@ export function readProfileFromUser(
     timezone: pickString(prefs.timezone),
     notifications_enabled: pickBool(prefs.notifications_enabled, true),
     risk_threshold: clampThreshold(pickNumber(prefs.risk_threshold, 5)),
+    api_token: pickString(prefs.api_token),
   };
 }
 
@@ -62,10 +59,12 @@ export function clampThreshold(n: number): number {
   return Math.max(1, Math.min(50, Math.round(n)));
 }
 
-/**
- * Loads the user profile, materializing defaults the first time around.
- * Writes the merged profile back so subsequent reads have a stable shape.
- */
+export function generateApiToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return "tl_" + Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export async function loadOrCreateProfile(
   user: Models.User<Models.Preferences>,
 ): Promise<UserProfile> {
@@ -92,8 +91,6 @@ export async function updateProfile(
   merged.risk_threshold = clampThreshold(merged.risk_threshold);
   const prefs = (user.prefs ?? {}) as Record<string, unknown>;
   await account.updatePrefs({ ...prefs, ...merged });
-  // Keep the auth `name` field in sync when the user updates full_name —
-  // this is what shows in the header avatar.
   if (
     typeof patch.full_name === "string" &&
     patch.full_name.trim() &&

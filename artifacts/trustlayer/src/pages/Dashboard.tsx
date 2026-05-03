@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   TrendingUp,
   ShieldCheck,
@@ -12,6 +12,7 @@ import {
   Loader2,
   XCircle,
   Shield,
+  Clock,
 } from "lucide-react";
 import { PageHeader, EmberButton, GhostButton } from "../components/Layout";
 import { KpiCards, type Kpi } from "../components/KpiCards";
@@ -45,6 +46,25 @@ type ModalState =
   | { mode: "create" }
   | { mode: "edit"; doc: DatasetDoc };
 
+function relativeTime(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 10) return "just now";
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return `${Math.floor(diffHr / 24)}d ago`;
+}
+
+const MOCK_SYNC_STEPS = [
+  "Connecting to OpenMetadata…",
+  "Fetching 12 datasets…",
+  "Computing trust scores…",
+  "Writing to catalog…",
+];
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { mode, openMetadata } = useWorkspace();
@@ -55,8 +75,12 @@ export default function Dashboard() {
   const [modal, setModal] = useState<ModalState>({ mode: "closed" });
   const [omOpen, setOmOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncStep, setSyncStep] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [lastSyncedLabel, setLastSyncedLabel] = useState<string>("");
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const greetingName = useMemo(() => {
     const n = user?.name?.trim();
@@ -64,6 +88,15 @@ export default function Dashboard() {
     if (user?.email) return user.email.split("@")[0];
     return "there";
   }, [user]);
+
+  useEffect(() => {
+    if (!lastSynced) return;
+    setLastSyncedLabel(relativeTime(lastSynced));
+    tickRef.current = setInterval(() => {
+      setLastSyncedLabel(relativeTime(lastSynced));
+    }, 15_000);
+    return () => { if (tickRef.current) clearInterval(tickRef.current); };
+  }, [lastSynced]);
 
   const load = useCallback(async () => {
     if (isDemo || !user) {
@@ -158,17 +191,21 @@ export default function Dashboard() {
   async function handleSync() {
     if (!user || !openMetadata) return;
     setSyncing(true);
+    setSyncStep("Connecting to OpenMetadata…");
     setSyncError(null);
     setSyncResult(null);
     try {
+      setSyncStep("Fetching datasets…");
       const result = await syncFromOpenMetadata(openMetadata, user.$id);
       setSyncResult(result);
+      setLastSynced(new Date());
       await load();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sync failed.";
       setSyncError(msg);
     } finally {
       setSyncing(false);
+      setSyncStep(null);
     }
   }
 
@@ -177,15 +214,24 @@ export default function Dashboard() {
     setSyncing(true);
     setSyncError(null);
     setSyncResult(null);
+
+    const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    for (const step of MOCK_SYNC_STEPS) {
+      setSyncStep(step);
+      await delay(650);
+    }
+
     try {
       const result = await syncMockedMetadata(user.$id);
       setSyncResult(result);
+      setLastSynced(new Date());
       await load();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Couldn't import sample data.";
       setSyncError(msg);
     } finally {
       setSyncing(false);
+      setSyncStep(null);
     }
   }
 
@@ -211,7 +257,7 @@ export default function Dashboard() {
                   if (!syncing) void handleSync();
                 }}
               >
-                {syncing ? "Syncing…" : "Sync from OpenMetadata"}
+                {syncing ? syncStep ?? "Syncing…" : "Sync from OpenMetadata"}
               </GhostButton>
             )}
             {!isDemo && (
@@ -223,15 +269,19 @@ export default function Dashboard() {
         }
       />
 
-      {isDemo && <DemoBanner />}
-      {!isDemo && <UserWorkspaceBanner
-        connected={!!openMetadata}
-        host={openMetadata?.url}
-        onConnect={() => setOmOpen(true)}
-        onSync={openMetadata ? handleSync : undefined}
-        onImportMock={handleMockSync}
-        syncing={syncing}
-      />}
+      {isDemo && <DemoBanner lastSyncedLabel={null} />}
+      {!isDemo && (
+        <UserWorkspaceBanner
+          connected={!!openMetadata}
+          host={openMetadata?.url}
+          onConnect={() => setOmOpen(true)}
+          onSync={openMetadata ? handleSync : undefined}
+          onImportMock={handleMockSync}
+          syncing={syncing}
+          syncStep={syncStep}
+          lastSyncedLabel={lastSyncedLabel || null}
+        />
+      )}
       {!isDemo && (syncResult || syncError) && (
         <SyncStatus
           result={syncResult}
@@ -241,6 +291,10 @@ export default function Dashboard() {
             setSyncError(null);
           }}
         />
+      )}
+
+      {!isDemo && syncing && syncStep && (
+        <SyncProgressBar step={syncStep} steps={MOCK_SYNC_STEPS} />
       )}
 
       <KpiCards items={kpis} />
@@ -285,6 +339,28 @@ export default function Dashboard() {
         onConnected={() => void handleSync()}
       />
     </>
+  );
+}
+
+function SyncProgressBar({ step, steps }: { step: string; steps: string[] }) {
+  const idx = steps.indexOf(step);
+  const pct = idx < 0 ? 10 : Math.round(((idx + 1) / steps.length) * 100);
+  return (
+    <div className="rounded-xl border border-[#1f1f24] bg-[#0d0d10] px-4 py-3">
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2 text-[12.5px] font-medium text-white">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-[#ff7a59]" />
+          {step}
+        </div>
+        <span className="text-[11px] text-[#5a5a63] tabular-nums">{pct}%</span>
+      </div>
+      <div className="h-1 rounded-full bg-[#16161a] overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#ff4d2e] to-[#ff7a59] transition-all duration-500"
+          style={{ width: `${pct}%`, boxShadow: "0 0 10px rgba(255,106,31,0.5)" }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -377,13 +453,10 @@ function SyncStatus({
           <XCircle className="h-4 w-4 text-[#f87171]" />
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-[12.5px] font-semibold text-white">OpenMetadata sync failed</div>
+          <div className="text-[12.5px] font-semibold text-white">Sync failed</div>
           <div className="text-[11.5px] text-[#fca5a5] mt-0.5 break-words">{error}</div>
         </div>
-        <button
-          onClick={onDismiss}
-          className="text-[11px] text-[#a1a1aa] hover:text-white transition-colors"
-        >
+        <button onClick={onDismiss} className="text-[11px] text-[#a1a1aa] hover:text-white transition-colors shrink-0">
           Dismiss
         </button>
       </div>
@@ -392,17 +465,17 @@ function SyncStatus({
   if (!result) return null;
   const { total, created, updated, failed } = result;
   return (
-    <div className="rounded-xl border border-[rgba(255,138,74,0.28)] bg-[rgba(255,138,74,0.06)] px-4 py-3 flex items-start gap-3">
-      <span className="h-8 w-8 rounded-lg bg-[rgba(255,138,74,0.10)] ring-1 ring-[rgba(255,138,74,0.28)] flex items-center justify-center shrink-0">
-        <CheckCircle2 className="h-4 w-4 text-[#ff7a59]" />
+    <div className="rounded-xl border border-[rgba(52,211,153,0.28)] bg-[rgba(52,211,153,0.05)] px-4 py-3 flex items-start gap-3">
+      <span className="h-8 w-8 rounded-lg bg-[rgba(52,211,153,0.10)] ring-1 ring-[rgba(52,211,153,0.28)] flex items-center justify-center shrink-0">
+        <CheckCircle2 className="h-4 w-4 text-[#34d399]" />
       </span>
       <div className="flex-1 min-w-0">
         <div className="text-[12.5px] font-semibold text-white">
-          OpenMetadata sync complete
+          {total} dataset{total === 1 ? "" : "s"} synced successfully
         </div>
         <div className="text-[11.5px] text-[#a1a1aa] mt-0.5">
-          {total} asset{total === 1 ? "" : "s"} synced from OpenMetadata · {created} new · {updated} updated
-          {failed > 0 ? ` · ${failed} failed` : ""}
+          {created} new · {updated} updated{failed > 0 ? ` · ${failed} failed` : ""}
+          {failed === 0 ? " — catalog is up to date." : ""}
         </div>
         {failed > 0 && result.errors.length > 0 && (
           <div className="mt-1.5 text-[11px] text-[#fca5a5] truncate">
@@ -410,17 +483,14 @@ function SyncStatus({
           </div>
         )}
       </div>
-      <button
-        onClick={onDismiss}
-        className="text-[11px] text-[#a1a1aa] hover:text-white transition-colors"
-      >
+      <button onClick={onDismiss} className="text-[11px] text-[#a1a1aa] hover:text-white transition-colors shrink-0">
         Dismiss
       </button>
     </div>
   );
 }
 
-function DemoBanner() {
+function DemoBanner({ lastSyncedLabel }: { lastSyncedLabel: string | null }) {
   return (
     <div className="relative rounded-xl border border-[#3a2418] bg-gradient-to-r from-[#1a1410] via-[#16110d] to-[#0d0b09] px-4 py-3 flex items-center gap-3 overflow-hidden">
       <span className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(255,77,46,0.18),transparent_65%)] blur-2xl" />
@@ -435,10 +505,15 @@ function DemoBanner() {
           </span>
         </div>
         <div className="text-[11.5px] text-[#a1a1aa]">
-          {DEMO_WORKSPACE_TAGLINE} Sample data is read-only — switch to Your Workspace to
-          add or edit datasets.
+          {DEMO_WORKSPACE_TAGLINE} Sample data is read-only — switch to Your Workspace to add or edit datasets.
         </div>
       </div>
+      {lastSyncedLabel && (
+        <div className="relative hidden sm:flex items-center gap-1.5 text-[11px] text-[#5a5a63] shrink-0">
+          <Clock className="h-3 w-3" />
+          Synced {lastSyncedLabel}
+        </div>
+      )}
     </div>
   );
 }
@@ -450,6 +525,8 @@ function UserWorkspaceBanner({
   onSync,
   onImportMock,
   syncing,
+  syncStep,
+  lastSyncedLabel,
 }: {
   connected: boolean;
   host?: string;
@@ -457,18 +534,29 @@ function UserWorkspaceBanner({
   onSync?: () => void;
   onImportMock?: () => void;
   syncing?: boolean;
+  syncStep?: string | null;
+  lastSyncedLabel?: string | null;
 }) {
   if (connected) {
     return (
       <div className="rounded-xl border border-[rgba(52,211,153,0.25)] bg-[rgba(52,211,153,0.05)] px-4 py-3 flex items-center gap-3">
-        <span className="h-8 w-8 rounded-lg bg-[rgba(52,211,153,0.10)] ring-1 ring-[rgba(52,211,153,0.28)] flex items-center justify-center">
+        <span className="h-8 w-8 rounded-lg bg-[rgba(52,211,153,0.10)] ring-1 ring-[rgba(52,211,153,0.28)] flex items-center justify-center shrink-0">
           <CheckCircle2 className="h-4 w-4 text-[#34d399]" />
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-[12.5px] font-semibold text-white">
-            Connected to OpenMetadata
+          <div className="text-[12.5px] font-semibold text-white">Connected to OpenMetadata</div>
+          <div className="text-[11.5px] text-[#a1a1aa] flex items-center gap-2 flex-wrap">
+            <span className="truncate max-w-[280px]">{host}</span>
+            {lastSyncedLabel && (
+              <>
+                <span className="text-[#3a3a40]">·</span>
+                <span className="flex items-center gap-1 text-[#5a5a63]">
+                  <Clock className="h-3 w-3" />
+                  Last synced {lastSyncedLabel}
+                </span>
+              </>
+            )}
           </div>
-          <div className="text-[11.5px] text-[#a1a1aa] truncate">{host}</div>
         </div>
         {onSync && (
           <button
@@ -481,7 +569,7 @@ function UserWorkspaceBanner({
             ) : (
               <RefreshCw className="h-3.5 w-3.5" />
             )}
-            {syncing ? "Syncing…" : "Sync now"}
+            {syncing ? syncStep ?? "Syncing…" : "Sync now"}
           </button>
         )}
         <button
@@ -493,9 +581,10 @@ function UserWorkspaceBanner({
       </div>
     );
   }
+
   return (
     <div className="rounded-xl border border-[#1f1f24] bg-[#0d0d10] px-4 py-3 flex items-center gap-3">
-      <span className="h-8 w-8 rounded-lg bg-[#16161a] border border-[#1f1f24] flex items-center justify-center">
+      <span className="h-8 w-8 rounded-lg bg-[#16161a] border border-[#1f1f24] flex items-center justify-center shrink-0">
         <Network className="h-4 w-4 text-[#ff7a59]" />
       </span>
       <div className="flex-1 min-w-0">
@@ -518,7 +607,7 @@ function UserWorkspaceBanner({
           ) : (
             <Sparkles className="h-3.5 w-3.5 text-[#ff7a59]" />
           )}
-          Import sample data
+          {syncing ? syncStep ?? "Importing…" : "Import sample data"}
         </button>
       )}
       <button
